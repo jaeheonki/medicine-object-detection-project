@@ -4,3 +4,6 @@ outputs/
 __pycache__/
 *.pyc
 .env
+.venv/
+.DS_Store
+sprint_ai_project1_data/
