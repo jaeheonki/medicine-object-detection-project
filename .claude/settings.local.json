@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where pandoc *)",
+      "Read(//c/Program Files/Pandoc//**)"
+    ]
+  }
+}
