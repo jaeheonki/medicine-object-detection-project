@@ -1,1 +1,2 @@
-# medicine-project
+# medicine-object-detection-project
+
