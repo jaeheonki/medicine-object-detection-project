@@ -1,6 +1,8 @@
 import os
 import json
 from pathlib import Path
+import random
+import shutil
 
 
 # json파일 하나의 경로를 받아서 YOLO모델이 학습할 수 있도록 txt파일로 변환하여 class_map과 txt_path를 리턴해주는 함수
@@ -106,3 +108,66 @@ def json_to_txt(
         )
 
     return class_map, class_names
+
+
+
+
+def split_yolo_dataset(
+    image_dir="./data/sprint_ai_project1_data/train_images",
+    label_dir="./data/sprint_ai_project1_data/YOLO_txt",
+    output_dir="./data/yolo_dataset",
+    val_ratio=0.2,
+    seed=42,
+):
+    image_dir = Path(image_dir)
+    label_dir = Path(label_dir)
+    output_dir = Path(output_dir)
+
+    # YOLO 권장 폴더 구조 생성
+    for subdir in [
+        "images/train", "images/val",
+        "labels/train", "labels/val"
+    ]:
+        (output_dir / subdir).mkdir(parents=True, exist_ok=True)
+
+    # 이미지 확장자 후보
+    image_exts = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+
+    # 이미지 파일 모으기
+    image_files = [f for f in image_dir.iterdir() if f.suffix.lower() in image_exts]
+
+    # 이미지와 같은 stem을 가진 txt 라벨만 매칭
+    pairs = []
+    missing_labels = []
+
+    for img_path in image_files:
+        label_path = label_dir / f"{img_path.stem}.txt"
+        if label_path.exists():
+            pairs.append((img_path, label_path))
+        else:
+            missing_labels.append(img_path.name)
+
+    print(f"전체 이미지 수: {len(image_files)}")
+    print(f"라벨 매칭 성공 수: {len(pairs)}")
+    print(f"라벨 없는 이미지 수: {len(missing_labels)}")
+
+    if len(pairs) == 0:
+        raise ValueError("매칭된 이미지-라벨 쌍이 없습니다. 파일명을 확인하세요.")
+
+    # 셔플 후 분할
+    random.seed(seed)
+    random.shuffle(pairs)
+
+    val_size = int(len(pairs) * val_ratio)
+    val_pairs = pairs[:val_size]
+    train_pairs = pairs[val_size:]
+
+    # 파일 복사
+    for split_name, split_pairs in [("train", train_pairs), ("val", val_pairs)]:
+        for img_path, label_path in split_pairs:
+            shutil.copy2(img_path, output_dir / "images" / split_name / img_path.name)
+            shutil.copy2(label_path, output_dir / "labels" / split_name / label_path.name)
+
+    print(f"train 개수: {len(train_pairs)}")
+    print(f"val 개수: {len(val_pairs)}")
+    print(f"저장 경로: {output_dir.resolve()}")
