@@ -5,6 +5,8 @@ import json
 import random
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
