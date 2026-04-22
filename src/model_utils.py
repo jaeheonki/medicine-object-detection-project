@@ -282,22 +282,23 @@ def plot_predictions(model, dataset, model_name="model", n=5):
 
             # 예측 박스
             axes[row, 1].imshow(img_np)
-            for box, score in zip(pred['boxes'].cpu(), pred['scores'].cpu()):
+            for box, score, label in zip(pred['boxes'].cpu(), pred['scores'].cpu(), pred['labels'].cpu()):
                 if score < 0.5:
                     continue
                 x1, y1, x2, y2 = box
                 rect = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2, edgecolor='red', facecolor='none')
                 axes[row, 1].add_patch(rect)
-                axes[row, 1].text(x1, y1, f'{score:.2f}', color='red', fontsize=8)
+                axes[row, 1].text(x1, y1, f'cls:{label.item()} {score:.2f}', color='red', fontsize=8)
             axes[row, 1].set_title('Prediction')
             axes[row, 1].axis('off')
 
             # 정답 박스
             axes[row, 2].imshow(img_np)
-            for box in target['boxes'].cpu():
+            for box, label in zip(target['boxes'].cpu(), target['labels'].cpu()):
                 x1, y1, x2, y2 = box
                 rect = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2, edgecolor='green', facecolor='none')
                 axes[row, 2].add_patch(rect)
+                axes[row, 2].text(x1, y1, f'cls:{label.item()}', color='green', fontsize=8)
             axes[row, 2].set_title('Ground Truth')
             axes[row, 2].axis('off')
 
