@@ -1,0 +1,108 @@
+import os
+import json
+from pathlib import Path
+
+
+# json파일 하나의 경로를 받아서 YOLO모델이 학습할 수 있도록 txt파일로 변환하여 class_map과 txt_path를 리턴해주는 함수
+def convert_custom_json_to_yolo_txt(json_path, output_dir, class_map=None):
+    os.makedirs(output_dir, exist_ok=True)  # output_dir 경로에 폴더 생성
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # 이미지 기본 정보 저장
+    file_name = data["file_name"]
+    img_w = data["width"]
+    img_h = data["height"]
+    annotations = data["merged_annotations"]
+    raw_categories = data["raw_categories"]
+
+    # class_map이 없으면 현재 json 안의 raw_categories 기준으로 생성
+    if class_map is None:
+        sorted_categories = sorted(raw_categories, key=lambda x: x["id"])
+        class_map = {cat["id"]: idx for idx, cat in enumerate(sorted_categories)}
+
+    txt_name = Path(file_name).stem + ".txt"
+    txt_path = os.path.join(output_dir, txt_name)
+
+    yolo_lines = []
+
+    for ann in annotations:  # ann에는 각 알약들의 bbox가 존재
+        # bbox_xywh = [x_min, y_min, width, height]
+        x_min, y_min, box_w, box_h = ann["bbox_xywh"]
+
+        if box_w <= 0 or box_h <= 0:
+            continue
+
+        category_id = ann["raw_annotation"]["category_id"]
+
+        # class_map에 없는 카테고리는 건너뜀
+        if category_id not in class_map:
+            continue
+
+        class_id = class_map[category_id]
+
+        x_center = x_min + box_w / 2
+        y_center = y_min + box_h / 2
+
+        # YOLO 형식으로 정규화
+        x_center /= img_w
+        y_center /= img_h
+        box_w /= img_w
+        box_h /= img_h
+
+        line = f"{class_id} {x_center:.6f} {y_center:.6f} {box_w:.6f} {box_h:.6f}"
+        yolo_lines.append(line)
+
+    # YOLO txt파일 작성
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(yolo_lines))
+
+    return class_map, txt_path
+
+
+# YOLO 모델에서는 약의 고유번호를 의미하는 category_id가 보통 0 ~ N까지의 연속된 정수로 이루어져 있기 때문에 매핑 작업을 진행하는 함수
+def build_global_class_map(json_dir):  # json파일이 모여있는 폴더를 입력받음
+    """
+    폴더 내 모든 json의 raw_categories를 모아서
+    category_id -> yolo_class_id 전역 매핑 생성
+    """
+    category_dict = {}  # key값은 category_id value값은 클래스 이름을 저장하는 임시 딕셔너리
+
+    for json_file in Path(json_dir).glob(
+        "*.json"
+    ):  # json_dir내의 모든 json 파일 경로 모으기
+        # json 파일 열기
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        for cat in data.get("raw_categories", []):
+            category_dict[cat["id"]] = cat[
+                "name"
+            ]  # json파일의 raw_categories의 id와 클래스 이름을 category_dict에 저장
+
+    # 정렬 이후 클래스 map 생성(cateogory_id와 매핑작업 진행)
+    sorted_cat_ids = sorted(category_dict.keys())
+    class_map = {cat_id: idx for idx, cat_id in enumerate(sorted_cat_ids)}
+    class_names = [category_dict[cat_id] for cat_id in sorted_cat_ids]
+
+    return (
+        class_map,
+        class_names,
+    )  # class_map은 key에 원래 category_id, value에 매핑값을 가진 딕셔너리 구조, calss_name은 class_map의 구조에 맞게 작성된 클래스 이름이 적힌 리스트
+
+
+# json파일을 YOLO 모델이 학습 가능하도록 txt파일로 변환하는 함수
+def json_to_txt(
+    json_dir, output_dir
+):  # json_dir로 json이 모여있는 폴더 경로를 입력, ouput_dir에는 만든 txt파일을 저장할 폴더 위치를 입력
+    os.makedirs(output_dir, exist_ok=True)
+
+    class_map, class_names = build_global_class_map(json_dir)
+
+    for json_file in Path(json_dir).glob("*.json"):
+        convert_custom_json_to_yolo_txt(
+            json_path=str(json_file), output_dir=output_dir, class_map=class_map
+        )
+
+    return class_map, class_names
