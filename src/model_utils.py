@@ -280,16 +280,24 @@ def plot_predictions(model, dataset, model_name="model", n=5):
             axes[row, 0].set_title('Original')
             axes[row, 0].axis('off')
 
-            # 예측 박스
+            # 예측 박스 (정답과 IoU 매칭 후 라벨 일치 여부로 색상 결정)
             axes[row, 1].imshow(img_np)
+            gt_boxes = target['boxes'].cpu()
+            gt_labels = target['labels'].cpu()
             for box, score, label in zip(pred['boxes'].cpu(), pred['scores'].cpu(), pred['labels'].cpu()):
                 if score < 0.5:
                     continue
                 x1, y1, x2, y2 = box
-                rect = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2, edgecolor='red', facecolor='none')
+                color = 'red'
+                if len(gt_boxes) > 0:
+                    iou = box_iou(box.unsqueeze(0), gt_boxes)[0]
+                    best_idx = iou.argmax().item()
+                    if iou[best_idx] >= 0.5 and gt_labels[best_idx].item() == label.item():
+                        color = 'green'
+                rect = patches.Rectangle((x1, y1), x2-x1, y2-y1, linewidth=2, edgecolor=color, facecolor='none')
                 axes[row, 1].add_patch(rect)
-                axes[row, 1].text(x1, y1, f'cls:{label.item()} {score:.2f}', color='red', fontsize=8)
-            axes[row, 1].set_title('Prediction')
+                axes[row, 1].text(x1, y1, f'cls:{label.item()} {score:.2f}', color=color, fontsize=8)
+            axes[row, 1].set_title('Prediction (green=correct, red=wrong)')
             axes[row, 1].axis('off')
 
             # 정답 박스
