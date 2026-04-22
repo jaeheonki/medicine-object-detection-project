@@ -31,12 +31,13 @@ def train(model, model_name, train_loader, val_loader, epochs, lr, wd, model_typ
     os.makedirs('checkpoints', exist_ok=True)
 
     start_time = time.time()
+    print(f"학습 시작 | 모델: {model_name} | Epochs: {epochs} | LR: {lr} | Device: {device}")
 
     for epoch in range(epochs):
         # 학습 단계
         model.train()
         train_loss = 0.0
-        for images, targets in train_loader:
+        for batch_idx, (images, targets) in enumerate(train_loader):
             images = [img.to(device) for img in images]
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
@@ -53,6 +54,8 @@ def train(model, model_name, train_loader, val_loader, epochs, lr, wd, model_typ
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
+            if (batch_idx + 1) % 8 == 0:
+                print(".", end="", flush=True)
 
         train_loss /= len(train_loader)
 

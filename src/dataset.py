@@ -24,6 +24,16 @@ class PillDataset(Dataset):
         self.transform = transform
         self.ann_paths = sorted(Path(ann_dir).glob("*.json"))
 
+        # category_id를 0부터 시작하는 연속 정수로 매핑 (torchvision 모델 요구사항)
+        raw_ids = set()
+        for p in self.ann_paths:
+            with open(p, "r", encoding="utf-8") as f:
+                item = json.load(f)
+            for ann in item.get("merged_annotations", []):
+                if ann["bbox_xyxy"] is not None:
+                    raw_ids.add(ann["raw_annotation"]["category_id"])
+        self.category_map = {raw_id: idx + 1 for idx, raw_id in enumerate(sorted(raw_ids))}
+
     def __len__(self):
         return len(self.ann_paths)
 
@@ -47,7 +57,7 @@ class PillDataset(Dataset):
             labels = torch.zeros((0,), dtype=torch.int64)
         else:
             boxes  = torch.tensor([a["bbox_xyxy"] for a in anns], dtype=torch.float32)
-            labels = torch.tensor([a["raw_annotation"]["category_id"] for a in anns], dtype=torch.int64)
+            labels = torch.tensor([self.category_map[a["raw_annotation"]["category_id"]] for a in anns], dtype=torch.int64)
 
         target = {"boxes": boxes, "labels": labels}
         return image, target
