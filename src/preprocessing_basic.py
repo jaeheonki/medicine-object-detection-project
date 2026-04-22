@@ -28,7 +28,7 @@ def make_dataloaders(dataset, batch_size=32, train_ratio=0.7, val_ratio=0.3, see
 
     total_size = len(dataset)
     train_size = int(total_size * train_ratio)
-    val_size = int(total_size * val_ratio)
+    val_size = total_size - train_size
 
     generator = torch.Generator().manual_seed(seed)
 
