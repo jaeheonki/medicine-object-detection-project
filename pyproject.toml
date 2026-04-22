@@ -1,0 +1,18 @@
+[project]
+name = "medicine-project"
+version = "0.1.0"
+description = "Medicine Object Detection Project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.10",
+    "numpy>=2.4",
+    "pandas>=3.0",
+    "torchmetrics>=1.9",
+    "gdown>=6.0",
+]
+
+[tool.uv.sources]
+torch = [{ url = "https://download.pytorch.org/whl/cu128" }]
+torchvision = [{ url = "https://download.pytorch.org/whl/cu128" }]
+torchaudio = [{ url = "https://download.pytorch.org/whl/cu128" }]
