@@ -103,8 +103,9 @@ def train(model, model_name, train_loader, val_loader, epochs, lr, wd, model_typ
 def evaluate(model, val_loader, model_type='torchvision'):
     model.eval()
 
-    # mAP 계산기 초기화 (IoU 0.75:0.95, 0.5 기준)
+    # mAP 계산기 초기화 (엄격 기준: 0.75~0.95, 완화 기준: 0.5 별도)
     metric = MeanAveragePrecision(iou_thresholds=[0.75, 0.80, 0.85, 0.90, 0.95], extended_summary=False)
+    metric_50 = MeanAveragePrecision(iou_thresholds=[0.50], extended_summary=False)
 
     all_preds = []
     all_targets = []
@@ -148,10 +149,12 @@ def evaluate(model, val_loader, model_type='torchvision'):
 
     # mAP 계산
     metric.update(all_preds, all_targets)  # ty: ignore[invalid-argument-type]
+    metric_50.update(all_preds, all_targets)  # ty: ignore[invalid-argument-type]
     result = metric.compute()  # ty: ignore[missing-argument]
+    result_50 = metric_50.compute()  # ty: ignore[missing-argument]
 
-    val_map = result['map'].item()        # mAP@0.75:0.95
-    val_map_50 = result['map_50'].item()  # mAP@0.5
+    val_map = result['map'].item()           # mAP@0.75:0.95
+    val_map_50 = result_50['map_50'].item()  # mAP@0.5
 
     # IoU 기반 TP/FP/FN 계산으로 정확한 precision/recall 산출
     precision, recall = calc_precision_recall(all_preds, all_targets)
