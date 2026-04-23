@@ -1,4 +1,5 @@
 from pathlib import Path
+import copy
 import json
 import yaml
 import random
@@ -154,7 +155,7 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
 
     def custom_eval_callback(trainer):
         tmp_model = YOLO(model_name)
-        tmp_model.model = trainer.model
+        tmp_model.model = copy.deepcopy(trainer.model)
         map_50, map_75_95, f1 = evaluate_yolo(tmp_model, val_image_dir, val_label_dir)
         custom_history["map_50"].append(map_50)
         custom_history["map_75_95"].append(map_75_95)
