@@ -51,7 +51,7 @@ def train_detr(
         "eval_threshold": eval_threshold,
     }
 
-    best_map = 0.0
+    best_map = -1.0
     early_stop_counter = 0
     patience = 10
 

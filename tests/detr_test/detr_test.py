@@ -50,7 +50,7 @@ def main():
         epochs=EPOCHS,
         lr=LR,
         wd=WD,
-        eval_threshold=0.5,
+        eval_threshold=0.1,
     )
 
     print_summary_detr(history, MODEL_NAME)
