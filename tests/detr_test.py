@@ -61,11 +61,11 @@ def main():
 
     # 배치 확인
     batch = next(iter(train_loader))
+    images_b, targets_b = batch
     print("batch type:", type(batch))
-    print("batch keys:", batch.keys())
-    print("pixel_values shape:", batch["pixel_values"].shape)
-    print("pixel_mask shape:", batch["pixel_mask"].shape)
-    print("labels len:", len(batch["labels"]))
+    print("images len:", len(images_b))
+    print("first image shape:", images_b[0].shape)
+    print("targets len:", len(targets_b))
 
     categories = train_dataset.categories
     id2label = {i: cat["name"] for i, cat in enumerate(categories)}

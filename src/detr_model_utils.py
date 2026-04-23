@@ -61,10 +61,10 @@ def train_detr(
         model.train()
         train_loss = 0.0
 
-        for batch_idx, batch in enumerate(train_loader):
-            pixel_values = batch["pixel_values"].to(device)
-            pixel_mask = batch["pixel_mask"].to(device)
-            labels = [{k: v.to(device) for k, v in t.items()} for t in batch["labels"]]
+        for batch_idx, (images, targets) in enumerate(train_loader):
+            pixel_values = torch.stack(images).to(device)
+            pixel_mask = torch.ones(pixel_values.shape[0], pixel_values.shape[2], pixel_values.shape[3], dtype=torch.long, device=device)
+            labels = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
             outputs = model(
                 pixel_values=pixel_values,
@@ -134,20 +134,14 @@ def evaluate_detr(model, val_loader, threshold=0.1):
     all_preds = []
     all_targets = []
 
-    for batch_idx, batch in enumerate(val_loader):
-        pixel_values = batch["pixel_values"].to(device)
-        pixel_mask = batch["pixel_mask"].to(device)
+    for _, (images, targets_raw) in enumerate(val_loader):
+        pixel_values = torch.stack(images).to(device)
+        pixel_mask = torch.ones(pixel_values.shape[0], pixel_values.shape[2], pixel_values.shape[3], dtype=torch.long, device=device)
 
         outputs = model(
             pixel_values=pixel_values,
             pixel_mask=pixel_mask,
         )
-
-        # 🔥 핵심 디버깅 (딱 1번만)
-        probs = outputs.logits.softmax(-1)[0, :, :-1]
-        scores = probs.max(-1).values
-        if batch_idx == 0:
-            print("pred scores:", scores[:10])
 
         target_sizes = torch.tensor(
             [[pixel_values.shape[-2], pixel_values.shape[-1]]] * pixel_values.size(0),
@@ -172,7 +166,7 @@ def evaluate_detr(model, val_loader, threshold=0.1):
         targets = []
         h, w = pixel_values.shape[-2], pixel_values.shape[-1]
 
-        for t in batch["labels"]:
+        for t in targets_raw:
             gt_boxes = t["boxes"]
             gt_labels = t["class_labels"]
 
