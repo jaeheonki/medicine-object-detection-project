@@ -329,13 +329,38 @@ def plot_predictions_detr(model, dataset, model_name, threshold=0.5, n=5):
     print("예측 시각화 저장 완료:", f"outputs/{model_name}_predictions.png")
 
 
-def prepare_detr_data(train_json, val_json, image_dir, batch_size=2):
-    from detr_dataset import PillDetrDataset, detr_collate_fn
+def prepare_detr_data(data_dir, train_ann_dir, merged_ann_dir, image_dir, split_dir, batch_size=2):
+    from detr_dataset import PillDetrDataset, detr_collate_fn, split_coco_json
+    from utils import download_data
+    from annotation_mapping import run_annotation_mapping
+
+    from pathlib import Path as _Path
+    data_dir = _Path(data_dir)
+    train_ann_dir = _Path(train_ann_dir)
+    merged_ann_dir = _Path(merged_ann_dir)
+    image_dir = _Path(image_dir)
+    split_dir = _Path(split_dir)
+
+    if not train_ann_dir.exists():
+        download_data(extract_path=str(data_dir))
+    else:
+        print("데이터가 이미 존재합니다. 다운로드를 건너뜁니다.")
+
+    if not merged_ann_dir.exists():
+        result = run_annotation_mapping(
+            annotation_root_dir=train_ann_dir,
+            output_dir=merged_ann_dir,
+        )
+        print("병합 이미지 수:", len(result["merged_results"]))
+    else:
+        print("merged_annotations가 이미 존재합니다. 매핑을 건너뜁니다.")
+
+    train_json, val_json = split_coco_json(merged_ann_dir, split_dir)
 
     processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50")
 
-    train_dataset = PillDetrDataset(train_json, image_dir, processor)
-    val_dataset = PillDetrDataset(val_json, image_dir, processor)
+    train_dataset = PillDetrDataset(train_json, str(image_dir), processor)
+    val_dataset = PillDetrDataset(val_json, str(image_dir), processor)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=detr_collate_fn)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=detr_collate_fn)

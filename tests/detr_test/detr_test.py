@@ -17,9 +17,11 @@ from src.detr_model_utils import (
 from src.model_utils import plot_history
 
 
-TRAIN_JSON = "/content/train_split.json"
-VAL_JSON = "/content/val_split.json"
-IMAGE_DIR = "/content/ai10-level1-project/sprint_ai_project1_data/train_images"
+DATA_DIR = PROJECT_ROOT / "data"
+TRAIN_ANN_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_annotations"
+MERGED_ANN_DIR = DATA_DIR / "merged_annotations"
+IMAGE_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_images"
+SPLIT_DIR = DATA_DIR / "detr_splits"
 
 BATCH_SIZE = 4
 EPOCHS = 100
@@ -34,7 +36,7 @@ def main():
     print("DEVICE:", DEVICE)
 
     train_loader, val_loader, val_dataset, id2label, label2id = prepare_detr_data(
-        TRAIN_JSON, VAL_JSON, IMAGE_DIR, BATCH_SIZE
+        DATA_DIR, TRAIN_ANN_DIR, MERGED_ANN_DIR, IMAGE_DIR, SPLIT_DIR, BATCH_SIZE
     )
     print("num_classes:", len(id2label))
 
