@@ -147,7 +147,7 @@ def evaluate_yolo(model, val_image_dir, val_label_dir):
     return map_50, map_75_95, f1
 
 
-def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch=-1):
+def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch=-1, lr0=0.01):
     yaml_path = Path(yaml_path)
     output_dir = Path(output_dir)
     val_image_dir = Path(yolo_dataset_dir) / "images" / "val"
@@ -171,6 +171,7 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         epochs=epochs,
         imgsz=640,
         batch=batch,
+        lr0=lr0,
         project=str(output_dir),
         name="train",
     )
