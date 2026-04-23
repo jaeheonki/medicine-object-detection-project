@@ -4,7 +4,7 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(PROJECT_ROOT / "src"))
 
-from yolo_utils import prepare_data, create_yaml, train, plot_history, plot_predictions
+from yolo_utils import prepare_data, create_yaml, train, plot_history, plot_predictions, print_summary
 
 DATA_DIR = PROJECT_ROOT / "data"
 TRAIN_ANN_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_annotations"
@@ -20,9 +20,10 @@ MODEL_NAME = "yolo26n.pt"
 def main():
     prepare_data(DATA_DIR, TRAIN_ANN_DIR, MERGED_ANN_DIR, YOLO_TXT_DIR, TRAIN_IMAGES_DIR, YOLO_DATASET_DIR)
     create_yaml(YAML_PATH, YOLO_DATASET_DIR, MERGED_ANN_DIR)
-    custom_history = train(MODEL_NAME, YAML_PATH, OUTPUT_DIR, YOLO_DATASET_DIR, epochs=100, batch=-1)
-    plot_history(custom_history, OUTPUT_DIR, MODEL_NAME)
-    plot_predictions(OUTPUT_DIR, YOLO_DATASET_DIR, MODEL_NAME)
+    custom_history, save_dir = train(MODEL_NAME, YAML_PATH, OUTPUT_DIR, YOLO_DATASET_DIR, epochs=100, batch=-1)
+    print_summary(custom_history, MODEL_NAME)
+    plot_history(custom_history, save_dir, MODEL_NAME)
+    plot_predictions(save_dir, YOLO_DATASET_DIR, MODEL_NAME)
 
 
 if __name__ == "__main__":

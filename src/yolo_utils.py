@@ -1,6 +1,7 @@
 from pathlib import Path
 import copy
 import json
+import time
 import yaml
 import random
 import torch
@@ -151,7 +152,8 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
     output_dir = Path(output_dir)
     val_image_dir = Path(yolo_dataset_dir) / "images" / "val"
     val_label_dir = Path(yolo_dataset_dir) / "labels" / "val"
-    custom_history = {"map_50": [], "map_75_95": [], "f1": []}
+    custom_history = {"map_50": [], "map_75_95": [], "f1": [], "time": 0.0}
+    start_time = time.time()
 
     def custom_eval_callback(trainer):
         tmp_model = YOLO(model_name)
@@ -173,17 +175,25 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         name="train",
     )
 
+    save_dir = Path(model.trainer.save_dir)
+    custom_history["time"] = time.time() - start_time
+
+    # on_fit_epoch_end가 epochs+1번 호출되는 경우 마지막 1개 제거
+    for key in ["map_50", "map_75_95", "f1"]:
+        if len(custom_history[key]) > epochs:
+            custom_history[key] = custom_history[key][:epochs]
+
     stem = Path(model_name).stem
-    with open(output_dir / "train" / f"{stem}_history.json", "w") as f:
+    with open(save_dir / f"{stem}_history.json", "w") as f:
         json.dump(custom_history, f, indent=4)
     print("커스텀 평가 기록 저장 완료")
 
-    return custom_history
+    return custom_history, save_dir
 
 
-def plot_history(custom_history, output_dir, model_name):
-    output_dir = Path(output_dir)
-    results_csv = output_dir / "train" / "results.csv"
+def plot_history(custom_history, save_dir, model_name):
+    save_dir = Path(save_dir)
+    results_csv = save_dir / "results.csv"
     df = pd.read_csv(results_csv)
     df.columns = df.columns.str.strip()
 
@@ -212,19 +222,19 @@ def plot_history(custom_history, output_dir, model_name):
 
     plt.suptitle(f"{model_name} Training History")
     plt.tight_layout()
-    plt.savefig(str(output_dir / "train" / "training_history.png"))
-    print("시각화 저장 완료:", output_dir / "train" / "training_history.png")
+    plt.savefig(str(save_dir / "training_history.png"))
+    print("시각화 저장 완료:", save_dir / "training_history.png")
 
 
-def plot_predictions(output_dir, yolo_dataset_dir, model_name, n=5):
-    output_dir = Path(output_dir)
+def plot_predictions(save_dir, yolo_dataset_dir, model_name, n=5):
+    save_dir = Path(save_dir)
     val_image_dir = Path(yolo_dataset_dir) / "images" / "val"
     val_label_dir = Path(yolo_dataset_dir) / "labels" / "val"
     image_exts = {".jpg", ".jpeg", ".png", ".bmp"}
     image_files = [f for f in val_image_dir.iterdir() if f.suffix.lower() in image_exts]
 
     samples = random.sample(image_files, min(n, len(image_files)))
-    best_model = YOLO(str(output_dir / "train" / "weights" / "best.pt"))
+    best_model = YOLO(str(save_dir / "weights" / "best.pt"))
 
     _, axes = plt.subplots(n, 2, figsize=(12, n * 5))
 
@@ -283,5 +293,33 @@ def plot_predictions(output_dir, yolo_dataset_dir, model_name, n=5):
 
     plt.suptitle(f"{model_name} Predictions")
     plt.tight_layout()
-    plt.savefig(str(output_dir / "train" / "predictions.png"))
-    print("예측 시각화 저장 완료:", output_dir / "train" / "predictions.png")
+    plt.savefig(str(save_dir / "predictions.png"))
+    print("예측 시각화 저장 완료:", save_dir / "predictions.png")
+
+
+def print_summary(custom_history, model_name):
+    map_50_list = custom_history["map_50"]
+    map_75_95_list = custom_history["map_75_95"]
+    f1_list = custom_history["f1"]
+    total_time = custom_history["time"]
+
+    best_map_50 = max(map_50_list)
+    best_map_75_95 = max(map_75_95_list)
+    best_f1 = max(f1_list)
+
+    best_map_50_epoch = map_50_list.index(best_map_50) + 1
+    best_map_75_95_epoch = map_75_95_list.index(best_map_75_95) + 1
+    best_f1_epoch = f1_list.index(best_f1) + 1
+
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+
+    print(f"\n{'='*50}")
+    print(f"  {model_name} 학습 결과 요약")
+    print(f"{'='*50}")
+    print(f"  Best mAP@0.5       : {best_map_50:.4f}  (Epoch {best_map_50_epoch})")
+    print(f"  Best mAP@0.75:0.95 : {best_map_75_95:.4f}  (Epoch {best_map_75_95_epoch})")
+    print(f"  Best F1 Score      : {best_f1:.4f}  (Epoch {best_f1_epoch})")
+    print(f"  총 학습 시간       : {hours}h {minutes}m {seconds}s")
+    print(f"{'='*50}\n")
