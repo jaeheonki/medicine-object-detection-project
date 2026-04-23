@@ -14,7 +14,7 @@ TRAIN_IMAGES_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_images"
 YOLO_DATASET_DIR = DATA_DIR / "yolo_dataset"
 YAML_PATH = YOLO_DATASET_DIR / "dataset.yaml"
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "yolo_26n"
-MODEL_NAME = "yolo11n.pt"
+MODEL_NAME = "yolo26n.pt"
 
 
 def main():
