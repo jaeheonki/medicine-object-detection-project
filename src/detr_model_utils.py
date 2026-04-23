@@ -10,11 +10,18 @@ Original file is located at
 import os
 import time
 import json
+import random
 
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import torch
+from torch.utils.data import DataLoader
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchvision.ops import box_iou
-from transformers import DetrImageProcessor
+from transformers import DetrImageProcessor, DetrForObjectDetection
 
 
 def train_detr(
@@ -245,3 +252,167 @@ def calc_precision_recall(preds, targets, iou_threshold=0.5, score_threshold=0.5
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     return precision, recall
+
+
+def plot_predictions_detr(model, dataset, model_name, threshold=0.5, n=5):
+    device = next(model.parameters()).device
+    processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50")
+
+    checkpoint_path = f"checkpoints/{model_name}.pt"
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device, weights_only=True))
+    model.eval()
+
+    indices = random.sample(range(len(dataset)), min(n, len(dataset)))
+
+    _, axes = plt.subplots(n, 3, figsize=(15, n * 4))
+
+    with torch.no_grad():
+        for row, idx in enumerate(indices):
+            image, target = dataset[idx]
+
+            pixel_values = image.unsqueeze(0).to(device)
+            pixel_mask = torch.ones(1, pixel_values.shape[2], pixel_values.shape[3], dtype=torch.long, device=device)
+
+            outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask)
+
+            target_sizes = torch.tensor([[pixel_values.shape[-2], pixel_values.shape[-1]]], device=device)
+            results = processor.post_process_object_detection(outputs, threshold=threshold, target_sizes=target_sizes)
+
+            pred_boxes = results[0]["boxes"].cpu()
+            pred_scores = results[0]["scores"].cpu()
+            pred_labels = results[0]["labels"].cpu()
+
+            h, w = image.shape[-2], image.shape[-1]
+            gt_boxes_norm = target["boxes"]
+            gt_labels = target["class_labels"]
+            cx, cy, bw, bh = gt_boxes_norm[:, 0], gt_boxes_norm[:, 1], gt_boxes_norm[:, 2], gt_boxes_norm[:, 3]
+            gt_boxes = torch.stack([
+                (cx - bw / 2) * w, (cy - bh / 2) * h,
+                (cx + bw / 2) * w, (cy + bh / 2) * h,
+            ], dim=-1).cpu()
+
+            img_np = image.permute(1, 2, 0).cpu().numpy()
+            img_np = np.clip(img_np, 0, 1)
+
+            axes[row, 0].imshow(img_np)
+            axes[row, 0].set_title("Original")
+            axes[row, 0].axis("off")
+
+            axes[row, 1].imshow(img_np)
+            for box, score, label in zip(pred_boxes, pred_scores, pred_labels):
+                x1, y1, x2, y2 = box
+                color = "red"
+                if len(gt_boxes) > 0:
+                    iou = box_iou(box.unsqueeze(0), gt_boxes)[0]
+                    best_idx = iou.argmax().item()
+                    if iou[best_idx] >= 0.5 and gt_labels[best_idx].item() == label.item():
+                        color = "green"
+                rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor=color, facecolor="none")
+                axes[row, 1].add_patch(rect)
+                axes[row, 1].text(x1, y1, f"cls:{label.item()} {score:.2f}", color=color, fontsize=8)
+            axes[row, 1].set_title("Prediction (green=correct, red=wrong)")
+            axes[row, 1].axis("off")
+
+            axes[row, 2].imshow(img_np)
+            for box, label in zip(gt_boxes, gt_labels):
+                x1, y1, x2, y2 = box
+                rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor="green", facecolor="none")
+                axes[row, 2].add_patch(rect)
+                axes[row, 2].text(x1, y1, f"cls:{label.item()}", color="green", fontsize=8)
+            axes[row, 2].set_title("Ground Truth")
+            axes[row, 2].axis("off")
+
+    plt.suptitle(f"{model_name} Predictions")
+    plt.tight_layout()
+    os.makedirs("outputs", exist_ok=True)
+    plt.savefig(f"outputs/{model_name}_predictions.png")
+    print("예측 시각화 저장 완료:", f"outputs/{model_name}_predictions.png")
+
+
+def prepare_detr_data(train_json, val_json, image_dir, batch_size=2):
+    from detr_dataset import PillDetrDataset, detr_collate_fn
+
+    processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50")
+
+    train_dataset = PillDetrDataset(train_json, image_dir, processor)
+    val_dataset = PillDetrDataset(val_json, image_dir, processor)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=detr_collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=detr_collate_fn)
+
+    categories = train_dataset.categories
+    id2label = {i: cat["name"] for i, cat in enumerate(categories)}
+    label2id = {v: k for k, v in id2label.items()}
+
+    return train_loader, val_loader, val_dataset, id2label, label2id
+
+
+def build_detr_model(id2label, label2id):
+    model = DetrForObjectDetection.from_pretrained(
+        "facebook/detr-resnet-50",
+        num_labels=len(id2label),
+        id2label=id2label,
+        label2id=label2id,
+        ignore_mismatched_sizes=True,
+    )
+    return model
+
+
+def print_summary_detr(history, model_name):
+    val_map_list = history["val_map"]
+    val_map_50_list = history["val_map_50"]
+    val_f1_list = history["val_f1"]
+    total_time = history["time"]
+
+    best_map = max(val_map_list)
+    best_map_50 = max(val_map_50_list)
+    best_f1 = max(val_f1_list)
+
+    best_map_epoch = val_map_list.index(best_map) + 1
+    best_map_50_epoch = val_map_50_list.index(best_map_50) + 1
+    best_f1_epoch = val_f1_list.index(best_f1) + 1
+
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+
+    print(f"\n{'='*50}")
+    print(f"  {model_name} 학습 결과 요약")
+    print(f"{'='*50}")
+    print(f"  Best mAP@0.75:0.95 : {best_map:.4f}  (Epoch {best_map_epoch})")
+    print(f"  Best mAP@0.5       : {best_map_50:.4f}  (Epoch {best_map_50_epoch})")
+    print(f"  Best F1 Score      : {best_f1:.4f}  (Epoch {best_f1_epoch})")
+    print(f"  총 학습 시간       : {hours}h {minutes}m {seconds}s")
+    print(f"{'='*50}\n")
+
+
+def print_summary_from_json(model_name):
+    json_path = f"outputs/{model_name}_history.json"
+    with open(json_path, "r") as f:
+        history = json.load(f)
+
+    val_map_list = history["val_map"]
+    val_map_50_list = history["val_map_50"]
+    val_f1_list = history["val_f1"]
+    total_time = history["time"]
+
+    best_map = max(val_map_list)
+    best_map_50 = max(val_map_50_list)
+    best_f1 = max(val_f1_list)
+
+    best_map_epoch = val_map_list.index(best_map) + 1
+    best_map_50_epoch = val_map_50_list.index(best_map_50) + 1
+    best_f1_epoch = val_f1_list.index(best_f1) + 1
+
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+
+    print(f"\n{'='*50}")
+    print(f"  {model_name} 학습 결과 요약 (from JSON)")
+    print(f"{'='*50}")
+    print(f"  Best mAP@0.75:0.95 : {best_map:.4f}  (Epoch {best_map_epoch})")
+    print(f"  Best mAP@0.5       : {best_map_50:.4f}  (Epoch {best_map_50_epoch})")
+    print(f"  Best F1 Score      : {best_f1:.4f}  (Epoch {best_f1_epoch})")
+    print(f"  총 학습 시간       : {hours}h {minutes}m {seconds}s")
+    print(f"{'='*50}\n")
