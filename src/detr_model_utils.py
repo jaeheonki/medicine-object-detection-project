@@ -53,7 +53,7 @@ def train_detr(
 
     best_map = -1.0
     early_stop_counter = 0
-    patience = 10
+    patience = 30
 
     os.makedirs("checkpoints", exist_ok=True)
     os.makedirs("outputs", exist_ok=True)
