@@ -7,3 +7,4 @@ __pycache__/
 .venv/
 .DS_Store
 sprint_ai_project1_data/
+*.zip
