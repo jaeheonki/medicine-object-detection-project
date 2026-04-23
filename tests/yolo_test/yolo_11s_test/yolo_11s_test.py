@@ -20,7 +20,7 @@ MODEL_NAME = "yolo11s.pt"
 def main():
     prepare_data(DATA_DIR, TRAIN_ANN_DIR, MERGED_ANN_DIR, YOLO_TXT_DIR, TRAIN_IMAGES_DIR, YOLO_DATASET_DIR)
     create_yaml(YAML_PATH, YOLO_DATASET_DIR, MERGED_ANN_DIR)
-    custom_history, save_dir = train(MODEL_NAME, YAML_PATH, OUTPUT_DIR, YOLO_DATASET_DIR, epochs=100, lr0 = 0.0001, batch=24)
+    custom_history, save_dir = train(MODEL_NAME, YAML_PATH, OUTPUT_DIR, YOLO_DATASET_DIR, epochs=100, optimizer = "AdamW", lr0 = 0.0001, batch=24)
     print_summary(custom_history, MODEL_NAME)
     plot_history(custom_history, save_dir, MODEL_NAME)
     plot_predictions(save_dir, YOLO_DATASET_DIR, MODEL_NAME)
