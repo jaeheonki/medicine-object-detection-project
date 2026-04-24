@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import random
 import shutil
+from utils import download_more_data
 
 
 # json파일 하나의 경로를 받아서 YOLO모델이 학습할 수 있도록 txt파일로 변환하여 class_map과 txt_path를 리턴해주는 함수
@@ -119,6 +120,8 @@ def split_yolo_dataset(
     val_ratio=0.2,
     seed=42,
 ):
+    EXTRA_DATA_ID = ""
+
     image_dir = Path(image_dir)
     label_dir = Path(label_dir)
     output_dir = Path(output_dir)
@@ -129,6 +132,9 @@ def split_yolo_dataset(
         "labels/train", "labels/val"
     ]:
         (output_dir / subdir).mkdir(parents=True, exist_ok=True)
+
+    if EXTRA_DATA_ID:
+        download_more_data(EXTRA_DATA_ID, str(label_dir), str(image_dir))
 
     # 이미지 확장자 후보
     image_exts = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
