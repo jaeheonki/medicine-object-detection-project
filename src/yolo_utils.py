@@ -93,8 +93,8 @@ def evaluate_yolo(model, val_image_dir, val_label_dir):
     image_exts = {".jpg", ".jpeg", ".png", ".bmp"}
     image_files = [f for f in val_image_dir.iterdir() if f.suffix.lower() in image_exts]
 
-    metric_50 = MeanAveragePrecision(iou_thresholds=[0.50])
-    metric_75_95 = MeanAveragePrecision(iou_thresholds=[0.75, 0.80, 0.85, 0.90, 0.95])
+    metric_50 = MeanAveragePrecision(iou_thresholds=[0.50], max_detection_thresholds=[1, 10, 300])
+    metric_75_95 = MeanAveragePrecision(iou_thresholds=[0.75, 0.80, 0.85, 0.90, 0.95], max_detection_thresholds=[1, 10, 300])
     all_preds, all_targets = [], []
 
     for img_path in image_files:
