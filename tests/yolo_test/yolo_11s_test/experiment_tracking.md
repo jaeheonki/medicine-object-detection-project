@@ -8,6 +8,7 @@
 | 이미지 크기      |  640   |
 | 배치            |  13   |
 | Epochs         |   100  |
+| Optimizer      |  AdamW   |
 | LR             |  0.000167   |
 | WD             |  0.0005   |
 | Momentum       |  0.9   |
@@ -29,6 +30,7 @@
 | 이미지 크기      |   640  |
 | 배치            |  24   |
 | Epochs         |   100  |
+| Optimizer      |  AdamW   |
 | LR             |  lr0만 0.0001로 설정(전 실험 대비 줄임)   |
 | WD             |  0.0005   |
 | Momentum       |   0.937  |
@@ -50,6 +52,7 @@
 | 이미지 크기      |   640  |
 | 배치            |  24   |
 | Epochs         |  100   |
+| Optimizer      |  AdamW   |
 | LR             |  0.000167(LR 복구)   |
 | WD             |   0.0005  |
 | Momentum       |   0.937  |
@@ -71,6 +74,7 @@
 | 이미지 크기      |   800  |
 | 배치            |  13   |
 | Epochs         |   100  |
+| Optimizer      |  AdamW   |
 | LR             |  0.0001   |
 | WD             |  0.0005   |
 | Momentum       |   0.937  |
@@ -92,8 +96,9 @@
 | 이미지 크기      |   640  |
 | 배치            |  13   |
 | Epochs         |  100   |
+| Optimizer      |  AdamW   |
 | LR             |  lr0 = 0.0001, lrf = 0.1  |
-| WD             |   0.005  |
+| WD             |   0.0005  |
 | Momentum       |   0.937  |
 | Augmentation   |   X  |
 | 기타 설정        |  기본   |
@@ -109,20 +114,21 @@
 
 | 항목            | 값 |
 |----------------|-----|
-| 모델            |     |
-| 이미지 크기      |     |
-| 배치            |     |
-| Epochs         |     |
-| LR             |     |
-| WD             |     |
-| Momentum       |     |
-| Augmentation   |     |
-| 기타 설정        |     |
-| mAP@0.5        |     |
-| mAP@0.75:0.95  |     |
-| F1             |     |
-| 학습 시간        |     |
-| 비고            |     |
+| 모델            |  yolo11s   |
+| 이미지 크기      |   640  |
+| 배치            |   13  |
+| Epochs         |   100  |
+| Optimizer      |  AdamW   |
+| LR             |  lr0 = 0.000167, lrf = 0.1   |
+| WD             |   0.0005  |
+| Momentum       |   0.937  |
+| Augmentation   |   X  |
+| 기타 설정        |  기본   |
+| mAP@0.5        |   0.9922  (Epoch 28)  |
+| mAP@0.75:0.95  |   0.9580  (Epoch 58)  |
+| F1             |  0.9936  (Epoch 94)   |
+| 학습 시간        |   18분 17초  |
+| 비고            |   실험1을 넘기 힘들다.. 그렇다면 옵티마이저를 바꿔보자 SGD로 ! 실험1과 같은 조건에서 optimizer만SGD로 바꿔서 해보자  |
 
 ---
 
@@ -130,15 +136,16 @@
 
 | 항목            | 값 |
 |----------------|-----|
-| 모델            |     |
-| 이미지 크기      |     |
-| 배치            |     |
-| Epochs         |     |
-| LR             |     |
-| WD             |     |
-| Momentum       |     |
-| Augmentation   |     |
-| 기타 설정        |     |
+| 모델            | yolo11s |
+| 이미지 크기      | 640 |
+| 배치            | 13 |
+| Epochs         | 100 |
+| Optimizer      | SGD |
+| LR             | lr0=0.01, lrf=0.01 (SGD 기본값) |
+| WD             | 0.0005 |
+| Momentum       | 0.937 |
+| Augmentation   | X |
+| 기타 설정        | 기본 |
 | mAP@0.5        |     |
 | mAP@0.75:0.95  |     |
 | F1             |     |
@@ -155,6 +162,7 @@
 | 이미지 크기      |     |
 | 배치            |     |
 | Epochs         |     |
+| Optimizer      |     |
 | LR             |     |
 | WD             |     |
 | Momentum       |     |
@@ -176,6 +184,7 @@
 | 이미지 크기      |     |
 | 배치            |     |
 | Epochs         |     |
+| Optimizer      |     |
 | LR             |     |
 | WD             |     |
 | Momentum       |     |
@@ -197,6 +206,7 @@
 | 이미지 크기      |     |
 | 배치            |     |
 | Epochs         |     |
+| Optimizer      |     |
 | LR             |     |
 | WD             |     |
 | Momentum       |     |
