@@ -120,11 +120,14 @@ def split_yolo_dataset(
     val_ratio=0.2,
     seed=42,
 ):
-    EXTRA_DATA_ID = ""
+    #EXTRA_DATA_ID = ""
 
     image_dir = Path(image_dir)
     label_dir = Path(label_dir)
     output_dir = Path(output_dir)
+    
+    #if EXTRA_DATA_ID:
+    #   download_more_data(EXTRA_DATA_ID, str(label_dir), str(image_dir))
 
     # YOLO 권장 폴더 구조 생성
     for subdir in [
@@ -133,8 +136,6 @@ def split_yolo_dataset(
     ]:
         (output_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    if EXTRA_DATA_ID:
-        download_more_data(EXTRA_DATA_ID, str(label_dir), str(image_dir))
 
     # 이미지 확장자 후보
     image_exts = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
