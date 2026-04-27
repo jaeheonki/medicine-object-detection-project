@@ -362,7 +362,7 @@ def make_yolo_submission():
     test_image_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "test_images"
     yaml_path=PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
     annotation_dir=PROJECT_ROOT / "data" / "merged_annotations"
-    output_csv_path=PROJECT_ROOT / "outputs" / "yolo11s_submission.csv"
+    output_csv_path=PROJECT_ROOT / "submission" / "yolo11s_submission.csv"
     score_threshold=0.5
 
     class_id_to_category_id = make_category_map(yaml_path, annotation_dir)
