@@ -1,6 +1,7 @@
 from pathlib import Path
 import copy
 import json
+import shutil
 import time
 import yaml
 import random
@@ -153,9 +154,11 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
     val_image_dir = Path(yolo_dataset_dir) / "images" / "val"
     val_label_dir = Path(yolo_dataset_dir) / "labels" / "val"
     custom_history = {"map_50": [], "map_75_95": [], "f1": [], "time": 0.0}
+    best_map_75_95 = 0.0
     start_time = time.time()
 
     def custom_eval_callback(trainer):
+        nonlocal best_map_75_95
         tmp_model = YOLO(model_name)
         tmp_model.model = copy.deepcopy(trainer.model)
         map_50, map_75_95, f1 = evaluate_yolo(tmp_model, val_image_dir, val_label_dir)
@@ -163,6 +166,13 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         custom_history["map_75_95"].append(map_75_95)
         custom_history["f1"].append(f1)
         print(f"  Custom | mAP@0.5: {map_50:.4f} | mAP@0.75:0.95: {map_75_95:.4f} | F1: {f1:.4f}")
+
+        if map_75_95 > best_map_75_95:
+            best_map_75_95 = map_75_95
+            last_pt = Path(trainer.save_dir) / "weights" / "last.pt"
+            if last_pt.exists():
+                shutil.copy(str(last_pt), str(last_pt.parent / "best_map75_95.pt"))
+                print(f"  best_map75_95.pt 저장 (mAP@0.75:0.95: {map_75_95:.4f})")
 
     model = YOLO(model_name)
     model.add_callback("on_fit_epoch_end", custom_eval_callback)
@@ -253,7 +263,10 @@ def plot_predictions(save_dir, yolo_dataset_dir, model_name, n=5):
     image_files = [f for f in val_image_dir.iterdir() if f.suffix.lower() in image_exts]
 
     samples = random.sample(image_files, min(n, len(image_files)))
-    best_model = YOLO(str(save_dir / "weights" / "best.pt"))
+    weights_dir = save_dir / "weights"
+    # mAP@0.75:0.95 기준 베스트 모델 우선 로드, 없으면 YOLO 기본 best.pt 사용
+    model_path = weights_dir / "best_map75_95.pt" if (weights_dir / "best_map75_95.pt").exists() else weights_dir / "best.pt"
+    best_model = YOLO(str(model_path))
 
     _, axes = plt.subplots(n, 2, figsize=(12, n * 5))
 

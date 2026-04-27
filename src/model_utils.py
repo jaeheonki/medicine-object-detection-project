@@ -353,12 +353,17 @@ def make_category_map(yaml_path, annotation_dir):
     }
 
 # %% 제출용 예측 함수
-def make_yolo_submission():
+def make_yolo_submission(save_dir):
     """
-    YOLO best.pt로 test image 예측 후 제출 CSV 생성
+    YOLO best_map75_95.pt로 test image 예측 후 제출 CSV 생성
+    save_dir: train() 함수가 반환하는 save_dir 경로
     """
     PROJECT_ROOT = Path("/content/medicine-object-detection-project")
-    model_path="/content/runs/detect/medicine-object-detection-project/outputs/yolo_11s/train/weights/best.pt"
+    save_dir = Path(save_dir)
+    # mAP@0.75:0.95 기준 베스트 모델 우선 로드, 없으면 YOLO 기본 best.pt 사용
+    model_path = save_dir / "weights" / "best_map75_95.pt"
+    if not model_path.exists():
+        model_path = save_dir / "weights" / "best.pt"
     test_image_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "test_images"
     yaml_path=PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
     annotation_dir=PROJECT_ROOT / "data" / "merged_annotations"
