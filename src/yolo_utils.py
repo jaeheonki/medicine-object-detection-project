@@ -197,7 +197,6 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         shear = 0.0,
         perspective = 0.0,
         flipud = 0.5,
-        fliplr = 0.5,
         mosaic = 0.0,
         close_mosaic = 0,
         mixup = 0.0,
