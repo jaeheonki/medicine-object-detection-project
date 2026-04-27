@@ -6,11 +6,14 @@ import random
 import numpy as np
 import pandas as pd
 import matplotlib
+import yaml
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from pathlib import Path
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchvision.ops import box_iou
+from ultralytics import YOLO
 
 # GPU/CPU 설정
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -316,69 +319,128 @@ def plot_predictions(model, dataset, model_name="model", n=5):
     plt.savefig(f'outputs/{model_name}_predictions.png')
     plt.show()
 
+# 원본 카테고리 아이디와 매핑
+def make_category_map(yaml_path, annotation_dir):
+    """
+    YOLO class id -> 원본 category_id 매핑 생성
+    """
+    with open(yaml_path, "r", encoding="utf-8") as f:
+        names = yaml.safe_load(f)["names"]
+
+    # YOLO class id -> 약 이름
+    yolo_id_to_name = {
+        i: " ".join(str(name).replace("\xa0", " ").split())
+        for i, name in enumerate(names)
+    }
+
+    # 약 이름 -> 원본 category_id
+    name_to_category_id = {}
+
+    for json_path in Path(annotation_dir).rglob("*.json"):
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        categories = data.get("raw_categories", data.get("categories", []))
+
+        for cat in categories:
+            name = " ".join(str(cat["name"]).replace("\xa0", " ").split())
+            name_to_category_id[name] = int(cat["id"])
+
+    # YOLO class id -> 원본 category_id
+    return {
+        class_id: name_to_category_id[name]
+        for class_id, name in yolo_id_to_name.items()
+    }
 
 # %% 제출용 예측 함수
-def predict(model, test_loader, model_name="model", score_threshold=0.5, model_type='torchvision'):
-    # best 모델 가중치 로드
-    model = load_model(model, model_name)
-    model.eval()
+def make_yolo_submission():
+    """
+    YOLO best.pt로 test image 예측 후 제출 CSV 생성
+    """
+    PROJECT_ROOT = Path("/content/medicine-object-detection-project")
+    model_path="/content/runs/detect/medicine-object-detection-project/outputs/yolo_11s/train/weights/best.pt"
+    test_image_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "test_images"
+    yaml_path=PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
+    annotation_dir=PROJECT_ROOT / "data" / "merged_annotations"
+    output_csv_path=PROJECT_ROOT / "outputs" / "yolo11s_submission.csv"
+    score_threshold=0.5
+
+    class_id_to_category_id = make_category_map(yaml_path, annotation_dir)
+
+    model = YOLO(str(model_path))
+
+    image_paths = (
+        list(Path(test_image_dir).glob("*.jpg"))
+        + list(Path(test_image_dir).glob("*.jpeg"))
+        + list(Path(test_image_dir).glob("*.png"))
+    )
+
+    image_paths = sorted(image_paths, key=lambda p: int(p.stem))
 
     rows = []
-    annotation_id = 1  # 각 행마다 고유한 annotation_id 부여
+    annotation_id = 1
 
-    with torch.no_grad():
-        for images, image_ids in test_loader:
-            images = [img.to(device) for img in images]
+    for image_path in image_paths:
+        image_id = int(image_path.stem)
 
-            # 모델 예측 (eval 모드 → 예측값만 반환)
-            if model_type == 'huggingface':
-                output = model(pixel_values=images)
-                prob = output.logits.softmax(-1)
-                scores, labels = prob[..., :-1].max(-1)
-                h, w = images[0].shape[-2], images[0].shape[-1]
-                boxes = output.pred_boxes
-                cx, cy, bw, bh = boxes[..., 0], boxes[..., 1], boxes[..., 2], boxes[..., 3]
-                x1 = (cx - bw / 2) * w
-                y1 = (cy - bh / 2) * h
-                x2 = (cx + bw / 2) * w
-                y2 = (cy + bh / 2) * h
-                abs_boxes = torch.stack([x1, y1, x2, y2], dim=-1)
-                preds = [{'boxes': abs_boxes[i].cpu(), 'scores': scores[i].cpu(), 'labels': labels[i].cpu()} for i in range(len(images))]
-            else:
-                preds = model(images)
+        result = model.predict(
+            source=str(image_path),
+            conf=score_threshold,
+            verbose=False,
+        )[0]
 
-            for image_id, pred in zip(image_ids, preds):
-                boxes = pred['boxes'].cpu()
-                scores = pred['scores'].cpu()
-                labels = pred['labels'].cpu()
+        if result.boxes is None:
+            continue
 
-                for box, score, label in zip(boxes, scores, labels):
-                    # score threshold 미만 예측 제외
-                    if score < score_threshold:
-                        continue
+        boxes = result.boxes.xyxy.cpu()
+        scores = result.boxes.conf.cpu()
+        labels = result.boxes.cls.cpu()
 
-                    # 모델 출력 [x1, y1, x2, y2] → 제출 포맷 [x, y, w, h] 변환
-                    x1, y1, x2, y2 = box
-                    bbox_x, bbox_y = x1.item(), y1.item()
-                    bbox_w, bbox_h = (x2 - x1).item(), (y2 - y1).item()
+        for box, score, label in zip(boxes, scores, labels):
+            x1, y1, x2, y2 = box.tolist()
+            w = x2 - x1
+            h = y2 - y1
 
-                    rows.append({
-                        'annotation_id': annotation_id,
-                        'image_id': int(image_id),
-                        'category_id': label.item(),
-                        'bbox_x': round(bbox_x, 2),
-                        'bbox_y': round(bbox_y, 2),
-                        'bbox_w': round(bbox_w, 2),
-                        'bbox_h': round(bbox_h, 2),
-                        'score': round(score.item(), 4),
-                    })
-                    annotation_id += 1
+            if w <= 0 or h <= 0:
+                continue
 
-    # 결과를 DataFrame으로 변환 후 CSV 저장
-    os.makedirs('outputs', exist_ok=True)
-    df = pd.DataFrame(rows)
-    df.to_csv(f'outputs/{model_name}_submission.csv', index=False)
-    print(f"Saved: outputs/{model_name}_submission.csv ({len(df)} rows)")
+            yolo_class_id = int(label.item())
+
+            rows.append({
+                "annotation_id": annotation_id,
+                "image_id": image_id,
+                "category_id": class_id_to_category_id[yolo_class_id],
+                "bbox_x": round(x1, 2),
+                "bbox_y": round(y1, 2),
+                "bbox_w": round(w, 2),
+                "bbox_h": round(h, 2),
+                "score": round(float(score.item()), 4),
+            })
+
+            annotation_id += 1
+
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            "annotation_id",
+            "image_id",
+            "category_id",
+            "bbox_x",
+            "bbox_y",
+            "bbox_w",
+            "bbox_h",
+            "score",
+        ],
+    )
+
+    output_csv_path = Path(output_csv_path)
+    os.makedirs(output_csv_path.parent, exist_ok=True)
+    df.to_csv(output_csv_path, index=False)
+
+    print(f"Saved: {output_csv_path}")
+    print(f"Rows: {len(df)}")
+
     return df
+
 
 # compare_models 추가 예정, loss 계산 방식 모든 아키텍처 완료되면 고칠 예정
