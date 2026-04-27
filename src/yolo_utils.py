@@ -178,6 +178,20 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         warmup_epochs=warmup_epochs,
         project=str(output_dir),
         name="train",
+        hsv_h = 0.015,
+        hsv_s = 0.5,
+        hsv_v = 0.5,
+        degrees = 0.0,
+        translate = 0.05,
+        scale = 0.1,
+        shear = 0.0,
+        perspective = 0.0,
+        flipud = 0.5,
+        fliplr = 0.5,
+        mosaic = 0.0,
+        close_mosaic = 0,
+        mixup = 0.0,
+        copy_paste = 0.0
     )
 
     save_dir = Path(model.trainer.save_dir)
