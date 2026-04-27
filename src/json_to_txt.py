@@ -120,14 +120,14 @@ def split_yolo_dataset(
     val_ratio=0.2,
     seed=42,
 ):
-    #EXTRA_DATA_ID = ""
+    EXTRA_DATA_ID = "https://drive.google.com/file/d/1gq3W2g0GbOna9wd3kImSqXetBBLeLs-i/view?usp=drive_link"
 
     image_dir = Path(image_dir)
     label_dir = Path(label_dir)
     output_dir = Path(output_dir)
     
-    #if EXTRA_DATA_ID:
-    #   download_more_data(EXTRA_DATA_ID, str(label_dir), str(image_dir))
+    if EXTRA_DATA_ID:
+        download_more_data(str(label_dir), str(image_dir))
 
     # YOLO 권장 폴더 구조 생성
     for subdir in [
