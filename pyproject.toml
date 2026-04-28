@@ -17,6 +17,8 @@ dependencies = [
     "ultralytics>=8.0",
     "transformers>=4.0",
     "timm>=0.9",
+    "requests>=2.0",
+    "python-dotenv>=1.0",
 ]
 
 [[tool.uv.index]]
