@@ -1,5 +1,6 @@
 import os
 import re
+import html
 import argparse
 import xml.etree.ElementTree as ET
 import requests
@@ -7,38 +8,54 @@ from dotenv import load_dotenv
 from ultralytics import YOLO
 import yaml
 
-# .env 파일에서 API 키 로드
 load_dotenv()
 
 API_KEY = os.getenv("MFDS_API_KEY")
-# 전문/일반의약품 모두 포함하는 의약품 제품허가정보 API
+
+# 전문/일반의약품을 모두 포함하는 식품의약품안전처 제품허가정보 API
+# (e약은요 API는 일반의약품만 지원하므로 이 API를 사용)
 BASE_URL = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnDtlInq06"
 
 
 def parse_xml_text(xml_str, limit=100):
-    # 효능/용법/주의사항 필드는 XML 형식으로 오므로 텍스트만 추출
+    """
+    API 응답의 효능/용법/주의사항 필드는 XML 문자열로 오기 때문에
+    태그를 제거하고 순수 텍스트만 추출한다.
+    결과가 limit 글자를 초과하면 잘라서 '...'을 붙인다.
+    """
     if not xml_str:
         return "정보 없음"
     try:
         root = ET.fromstring(xml_str)
         texts = [elem.text.strip() for elem in root.iter() if elem.text and elem.text.strip()]
         text = " ".join(texts)
+
+        # XML 내부에 &nbsp; 같은 HTML 엔티티가 포함되는 경우가 있어 정리
+        text = html.unescape(text)       # &amp;nbsp; → &nbsp; → \xa0
+        text = text.replace("\xa0", " ") # non-breaking space → 일반 공백
+        text = " ".join(text.split())    # 연속 공백 정리
+
         return text[:limit] + "..." if len(text) > limit else text
     except ET.ParseError:
         return "정보 없음"
 
 
+# API DB에서 약품명은 "놀텍정10밀리그램"처럼 용량을 한글로 표기하므로
+# YOLO 클래스명("놀텍정 10mg")을 검색 전에 변환해야 한다
 DOSAGE_PATTERN = re.compile(r"\s*(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml)\b", re.IGNORECASE)
 UNIT_KO = {"mg": "밀리그램", "mcg": "마이크로그램", "g": "그램", "ml": "밀리리터"}
 
 
 def _dosage_to_korean(match):
+    # 정규식 매치 결과에서 숫자와 단위를 꺼내 한글로 조합
+    # 예: " 10mg" → "10밀리그램"
     number = match.group(1)
     unit = match.group(2).lower()
     return number + UNIT_KO.get(unit, unit)
 
 
 def _query_api(name):
+    # 식약처 API에 약품명으로 단건 조회 요청, 결과 items 리스트 반환
     params = {
         "serviceKey": API_KEY,
         "item_name": name,
@@ -51,15 +68,19 @@ def _query_api(name):
 
 
 def get_pill_info(pill_name):
-    # 식품의약품안전처 제품허가정보 API에 약품명으로 정보 요청
-    # "놀텍정 10mg"처럼 용량이 붙은 경우 한글로 변환("놀텍정10밀리그램")하여 검색
+    """
+    약품명으로 식약처 API를 조회해 효능/복용법/주의사항을 반환한다.
+
+    YOLO 클래스명에는 '놀텍정 10mg'처럼 영문 용량이 붙어 있지만,
+    API DB는 '놀텍정10밀리그램'으로 저장되어 있어 변환 후 검색한다.
+    """
     search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
     items = _query_api(search_name)
 
     if not items:
         return None
 
-    # API 응답에서 필요한 정보 추출 (효능/용법/주의사항은 XML → 텍스트 변환)
+    # EE: 효능효과, UD: 용법용량, NB: 사용상주의사항 (XML 문자열 → 텍스트 변환)
     item = items[0]
     return {
         "약품명": item.get("ITEM_NAME"),
@@ -70,17 +91,52 @@ def get_pill_info(pill_name):
 
 
 def load_class_names(yaml_path):
-    # dataset.yaml에서 YOLO 클래스 id → 약품명 리스트 로드
+    # dataset.yaml의 'names' 키: YOLO 클래스 인덱스 → 약품명 리스트
     with open(yaml_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data["names"]
 
 
-def predict_and_lookup(image_path, model_path, yaml_path, score_threshold=0.5):
+def detect_pills(image_path, model_path, yaml_path, score_threshold=0.5):
+    """
+    이미지에서 약을 탐지하고 각 약의 API 정보를 함께 반환한다. (FastAPI용)
+
+    같은 약이 이미지 내 여러 위치에서 탐지될 수 있으므로,
+    동일 클래스 중 confidence가 가장 높은 박스 하나만 대표값으로 사용한다.
+
+    반환 형태:
+    [{"name": "놀텍정 10mg", "confidence": 96.3, "info": {...}}, ...]
+    """
     class_names = load_class_names(yaml_path)
     model = YOLO(str(model_path))
 
-    # YOLO로 이미지에서 약 탐지
+    results = model.predict(source=str(image_path), conf=score_threshold, verbose=False)
+    result = results[0]
+
+    if result.boxes is None or len(result.boxes) == 0:
+        return []
+
+    # 클래스별 최대 confidence 저장
+    detected = {}
+    for label, conf in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu()):
+        name = class_names[int(label.item())]
+        detected[name] = max(detected.get(name, 0.0), float(conf.item()))
+
+    output = []
+    for name, conf in detected.items():
+        output.append({
+            "name": name,
+            "confidence": round(conf * 100, 1),
+            "info": get_pill_info(name),
+        })
+    return output
+
+
+def predict_and_lookup(image_path, model_path, yaml_path, score_threshold=0.5):
+    """CLI에서 직접 실행할 때 사용. 탐지 결과를 터미널에 출력한다."""
+    class_names = load_class_names(yaml_path)
+    model = YOLO(str(model_path))
+
     results = model.predict(source=str(image_path), conf=score_threshold, verbose=False)
     result = results[0]
 
@@ -88,7 +144,7 @@ def predict_and_lookup(image_path, model_path, yaml_path, score_threshold=0.5):
         print("인식된 약이 없습니다.")
         return
 
-    # 같은 약이 여러 번 탐지될 수 있으므로 최대 confidence만 저장
+    # 클래스별 최대 confidence 저장
     detected = {}
     for label, conf in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu()):
         name = class_names[int(label.item())]
@@ -96,7 +152,6 @@ def predict_and_lookup(image_path, model_path, yaml_path, score_threshold=0.5):
 
     print(f"인식된 약: {', '.join(detected.keys())}\n")
 
-    # 인식된 약마다 API 조회 후 출력
     for name, conf in detected.items():
         print(f"{'='*50}")
         print(f"[신뢰도] {conf * 100:.1f}%\n")
