@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-from pill_lookup import detect_pills
+from pill_lookup import detect_pills  # type: ignore[import-not-found]
 
 load_dotenv()
 
