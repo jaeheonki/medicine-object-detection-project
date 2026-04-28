@@ -8,7 +8,8 @@ from pathlib import Path
 # (src/__init__.py 없이 uvicorn src.api:app 형태로 실행하기 때문)
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from pill_lookup import detect_pills
 
@@ -19,6 +20,12 @@ MODEL_PATH = os.getenv("MODEL_PATH")
 YAML_PATH = os.getenv("YAML_PATH")
 
 app = FastAPI(title="Medicine Detection API")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # try/except 밖에서 터지는 예외도 JSON으로 반환해 디버깅 가능하게
+    return JSONResponse(status_code=500, content={"detail": str(exc), "type": type(exc).__name__})
 
 
 @app.get("/health")
