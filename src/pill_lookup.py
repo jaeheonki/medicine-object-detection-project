@@ -1,6 +1,7 @@
 import os
+import re
 import argparse
-from pathlib import Path
+import xml.etree.ElementTree as ET
 import requests
 from dotenv import load_dotenv
 from ultralytics import YOLO
@@ -10,40 +11,61 @@ import yaml
 load_dotenv()
 
 API_KEY = os.getenv("MFDS_API_KEY")
-BASE_URL = "http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList"
+# 전문/일반의약품 모두 포함하는 의약품 제품허가정보 API
+BASE_URL = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnDtlInq06"
 
 
-def get_pill_info(pill_name):
-    # 식품의약품안전처 API에 약품명으로 정보 요청
+def parse_xml_text(xml_str, limit=100):
+    # 효능/용법/주의사항 필드는 XML 형식으로 오므로 텍스트만 추출
+    if not xml_str:
+        return "정보 없음"
+    try:
+        root = ET.fromstring(xml_str)
+        texts = [elem.text.strip() for elem in root.iter() if elem.text and elem.text.strip()]
+        text = " ".join(texts)
+        return text[:limit] + "..." if len(text) > limit else text
+    except ET.ParseError:
+        return "정보 없음"
+
+
+DOSAGE_PATTERN = re.compile(r"\s*(\d+(?:\.\d+)?)\s*(mg|mcg|g|ml)\b", re.IGNORECASE)
+UNIT_KO = {"mg": "밀리그램", "mcg": "마이크로그램", "g": "그램", "ml": "밀리리터"}
+
+
+def _dosage_to_korean(match):
+    number = match.group(1)
+    unit = match.group(2).lower()
+    return number + UNIT_KO.get(unit, unit)
+
+
+def _query_api(name):
     params = {
         "serviceKey": API_KEY,
-        "itemName": pill_name,
+        "item_name": name,
         "type": "json",
-        "numOfRows": 1,  # 가장 근접한 결과 1개만 조회
+        "numOfRows": 1,
     }
     response = requests.get(BASE_URL, params=params)
     response.raise_for_status()
+    return response.json().get("body", {}).get("items", [])
 
-    data = response.json()
-    items = data.get("body", {}).get("items", [])
+
+def get_pill_info(pill_name):
+    # 식품의약품안전처 제품허가정보 API에 약품명으로 정보 요청
+    # "놀텍정 10mg"처럼 용량이 붙은 경우 한글로 변환("놀텍정10밀리그램")하여 검색
+    search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
+    items = _query_api(search_name)
 
     if not items:
         return None
 
-    # API 응답에서 필요한 정보만 추출, 각 항목 100자로 제한
+    # API 응답에서 필요한 정보 추출 (효능/용법/주의사항은 XML → 텍스트 변환)
     item = items[0]
-    def truncate(text, limit=100):
-        if not text:
-            return "정보 없음"
-        return text[:limit] + "..." if len(text) > limit else text
-
     return {
-        "약품명": item.get("itemName"),
-        "효능": truncate(item.get("efcyQesitm")),
-        "복용법": truncate(item.get("useMethodQesitm")),
-        "주의사항": truncate(item.get("atpnQesitm")),
-        "부작용": truncate(item.get("seQesitm")),
-        "보관법": truncate(item.get("depositMethodQesitm")),
+        "약품명": item.get("ITEM_NAME"),
+        "효능": parse_xml_text(item.get("EE_DOC_DATA")),
+        "복용법": parse_xml_text(item.get("UD_DOC_DATA")),
+        "주의사항": parse_xml_text(item.get("NB_DOC_DATA")),
     }
 
 
@@ -66,16 +88,18 @@ def predict_and_lookup(image_path, model_path, yaml_path, score_threshold=0.5):
         print("인식된 약이 없습니다.")
         return
 
-    # 같은 약이 여러 번 탐지될 수 있으므로 set으로 중복 제거
-    detected_names = set()
-    for label in result.boxes.cls.cpu():
-        detected_names.add(class_names[int(label.item())])
+    # 같은 약이 여러 번 탐지될 수 있으므로 최대 confidence만 저장
+    detected = {}
+    for label, conf in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu()):
+        name = class_names[int(label.item())]
+        detected[name] = max(detected.get(name, 0.0), float(conf.item()))
 
-    print(f"인식된 약: {', '.join(detected_names)}\n")
+    print(f"인식된 약: {', '.join(detected.keys())}\n")
 
     # 인식된 약마다 API 조회 후 출력
-    for name in detected_names:
+    for name, conf in detected.items():
         print(f"{'='*50}")
+        print(f"[신뢰도] {conf * 100:.1f}%\n")
         info = get_pill_info(name)
         if info:
             for key, value in info.items():
