@@ -18,12 +18,12 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchvision.ops import box_iou
 
 from utils import download_data
-from annotation_mapping import run_annotation_mapping
+from annotation_mapping import run_annotation_mapping, fix_annotation_dir
 from json_to_txt import json_to_txt, split_yolo_dataset, build_global_class_map
 from model_utils import calc_precision_recall
 
 
-def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_images_dir, yolo_dataset_dir):
+def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_images_dir, yolo_dataset_dir, extra_ann_dir):
     data_dir = Path(data_dir)
     train_ann_dir = Path(train_ann_dir)
     merged_ann_dir = Path(merged_ann_dir)
@@ -31,12 +31,22 @@ def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_im
     train_images_dir = Path(train_images_dir)
     yolo_dataset_dir = Path(yolo_dataset_dir)
 
+    if extra_ann_dir is not None:
+        extra_ann_dir = Path(extra_ann_dir)
+    
     if not train_ann_dir.exists():
         download_data(extract_path=str(data_dir))
     else:
         print("데이터가 이미 존재합니다. 다운로드를 건너뜁니다.")
 
     if not merged_ann_dir.exists():
+        if extra_ann_dir is not None and extra_ann_dir.exists():
+            fixed_extra_ann_dir = train_ann_dir / "fixed_extra_annotations"
+
+            fix_annotation_dir(input_dir=extra_ann_dir, output_dir=fixed_extra_ann_dir)
+            print("새 어노테이션 생성 완료:", fixed_extra_ann_dir)
+        elif extra_ann_dir is not None:
+            print("extra_ann_dir이 존재하지 않습니다.")
         result = run_annotation_mapping(
             annotation_root_dir=train_ann_dir,
             output_dir=merged_ann_dir,
