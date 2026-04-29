@@ -4,12 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
+// 로컬 FastAPI 서버 주소 — 실제 기기에서 테스트할 때는 PC의 내부 IP로 변경 필요
 const String apiUrl = 'http://localhost:9000/predict';
 
 void main() {
   runApp(const PillApp());
 }
 
+// 앱 루트 위젯 — 테마 및 시작 화면 설정
 class PillApp extends StatelessWidget {
   const PillApp({super.key});
 
@@ -23,6 +25,7 @@ class PillApp extends StatelessWidget {
   }
 }
 
+// 메인 화면 — 이미지 선택, 서버 분석 요청, 결과 표시를 담당
 class PillHomePage extends StatefulWidget {
   const PillHomePage({super.key});
 
@@ -31,12 +34,14 @@ class PillHomePage extends StatefulWidget {
 }
 
 class _PillHomePageState extends State<PillHomePage> {
-  Uint8List? _imageBytes;
-  String? _fileName;
-  List<dynamic> _results = [];
-  bool _loading = false;
-  String? _errorMessage;
+  Uint8List? _imageBytes;  // 선택한 이미지의 바이트 데이터
+  String? _fileName;       // 선택한 이미지 파일명 (서버 전송 시 필요)
+  List<dynamic> _results = [];  // 서버로부터 받은 탐지 결과 목록
+  bool _loading = false;        // 서버 요청 중 여부 (버튼 비활성화 및 로딩 표시에 사용)
+  String? _errorMessage;        // 서버 오류 또는 연결 실패 메시지
 
+  // 갤러리 또는 카메라에서 이미지를 선택하고 상태를 업데이트
+  // 웹에서는 source 구분 없이 파일 탐색기가 열림 — 실제 기기에서는 카메라/갤러리 구분됨
   Future<void> _pickImage(ImageSource source) async {
     final picked = await ImagePicker().pickImage(source: source);
     if (picked == null) return;
@@ -50,7 +55,7 @@ class _PillHomePageState extends State<PillHomePage> {
     });
   }
 
-  // FastAPI /predict 호출
+  // 선택한 이미지를 FastAPI /predict 엔드포인트로 전송하고 결과를 받아옴
   Future<void> _analyze() async {
     if (_imageBytes == null || _fileName == null) return;
 
@@ -61,6 +66,7 @@ class _PillHomePageState extends State<PillHomePage> {
     });
 
     try {
+      // multipart/form-data 형식으로 이미지 전송
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
       request.files.add(http.MultipartFile.fromBytes(
         'image',
@@ -93,7 +99,7 @@ class _PillHomePageState extends State<PillHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 이미지 미리보기
+            // 선택한 이미지 미리보기
             if (_imageBytes != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -101,6 +107,7 @@ class _PillHomePageState extends State<PillHomePage> {
               ),
             const SizedBox(height: 12),
 
+            // 갤러리 / 카메라 선택 버튼
             Row(
               children: [
                 Expanded(
@@ -122,7 +129,7 @@ class _PillHomePageState extends State<PillHomePage> {
             ),
             const SizedBox(height: 8),
 
-            // 분석 버튼
+            // 분석 버튼 — 이미지가 선택되지 않았거나 로딩 중이면 비활성화
             ElevatedButton.icon(
               onPressed: (_imageBytes != null && !_loading) ? _analyze : null,
               icon: _loading
@@ -132,11 +139,11 @@ class _PillHomePageState extends State<PillHomePage> {
             ),
             const SizedBox(height: 16),
 
-            // 에러 메시지
+            // 오류 발생 시 빨간 텍스트로 표시
             if (_errorMessage != null)
               Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
 
-            // 결과 카드
+            // 탐지된 약 목록을 카드로 렌더링
             ..._results.map((pill) => _PillCard(pill: pill)),
           ],
         ),
@@ -145,6 +152,8 @@ class _PillHomePageState extends State<PillHomePage> {
   }
 }
 
+// 탐지된 약 하나의 정보를 카드 형태로 표시
+// 서버 응답의 crop_image(base64)를 디코딩해 알약 이미지를 함께 보여줌
 class _PillCard extends StatelessWidget {
   final Map<String, dynamic> pill;
   const _PillCard({required this.pill});
@@ -153,6 +162,8 @@ class _PillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final info = pill['info'] as Map<String, dynamic>?;
     final cropB64 = pill['crop_image'] as String?;
+
+    // 서버에서 받은 base64 문자열을 이미지 바이트로 변환
     Uint8List? cropBytes;
     if (cropB64 != null) {
       cropBytes = base64Decode(cropB64);
@@ -168,7 +179,7 @@ class _PillCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 잘라낸 알약 이미지
+                // YOLO bbox 기준으로 잘라낸 알약 이미지
                 if (cropBytes != null)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -180,7 +191,7 @@ class _PillCard extends StatelessWidget {
                     ),
                   ),
                 if (cropBytes != null) const SizedBox(width: 12),
-                // 약품명 + 신뢰도
+                // 약품명 + 신뢰도 칩
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,6 +210,7 @@ class _PillCard extends StatelessWidget {
               ],
             ),
             const Divider(),
+            // 식약처 API로 조회한 약품 상세 정보
             if (info != null) ...[
               _InfoRow('약품명', info['약품명']),
               _InfoRow('효능', info['효능']),
@@ -213,6 +225,8 @@ class _PillCard extends StatelessWidget {
   }
 }
 
+// 라벨과 값을 세로로 쌓아 표시하는 정보 행
+// 값이 길 경우 _ExpandableText가 접기/더보기를 처리
 class _InfoRow extends StatelessWidget {
   final String label;
   final String? value;
@@ -234,6 +248,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+// 200자 초과 텍스트를 접어두고 '...더보기'로 펼칠 수 있는 위젯
 class _ExpandableText extends StatefulWidget {
   final String text;
   const _ExpandableText(this.text);
@@ -243,7 +258,7 @@ class _ExpandableText extends StatefulWidget {
 }
 
 class _ExpandableTextState extends State<_ExpandableText> {
-  static const int _limit = 200;
+  static const int _limit = 200;  // 접힘 기준 글자 수
   bool _expanded = false;
 
   @override

@@ -24,6 +24,9 @@ def parse_xml_text(xml_str):
     """
     API 응답의 효능/용법/주의사항 필드는 XML 문자열로 오기 때문에
     태그를 제거하고 순수 텍스트만 추출한다.
+
+    ElementTree로 파싱 후 text/tail을 모두 수집하고,
+    파싱 실패 시 원문에서 정규식으로 태그를 제거하는 방식으로 폴백한다.
     """
     if not xml_str:
         return "정보 없음"
@@ -31,19 +34,22 @@ def parse_xml_text(xml_str):
         root = ET.fromstring(xml_str)
         parts = []
         for elem in root.iter():
+            # elem.text: 태그 내부 텍스트, elem.tail: 닫힌 태그 뒤 텍스트
             if elem.text and elem.text.strip():
                 parts.append(elem.text.strip())
             if elem.tail and elem.tail.strip():
                 parts.append(elem.tail.strip())
         text = " ".join(parts)
     except ET.ParseError:
+        # XML 파싱 실패 시 원문에서 태그를 직접 제거
         text = xml_str
 
     # XML/HTML 태그 제거 (파싱 후 남은 태그 포함)
     text = re.sub(r"<[^>]+>", "", text)
+    # &amp;, &nbsp; 등 HTML 엔티티 정리
     text = html.unescape(text)
-    text = text.replace("\xa0", " ")
-    text = " ".join(text.split())
+    text = text.replace("\xa0", " ")  # non-breaking space → 일반 공백
+    text = " ".join(text.split())     # 연속 공백 정리
 
     return text or "정보 없음"
 
@@ -55,15 +61,14 @@ UNIT_KO = {"mg": "밀리그램", "mcg": "마이크로그램", "g": "그램", "ml
 
 
 def _dosage_to_korean(match):
-    # 정규식 매치 결과에서 숫자와 단위를 꺼내 한글로 조합
-    # 예: " 10mg" → "10밀리그램"
+    """정규식 매치 결과에서 숫자와 단위를 꺼내 한글로 조합. 예: ' 10mg' → '10밀리그램'"""
     number = match.group(1)
     unit = match.group(2).lower()
     return number + UNIT_KO.get(unit, unit)
 
 
 def _query_api(name):
-    # 식약처 API에 약품명으로 단건 조회 요청, 결과 items 리스트 반환
+    """식약처 API에 약품명으로 단건 조회 요청. 결과 items 리스트를 반환한다."""
     params = {
         "serviceKey": API_KEY,
         "item_name": name,
@@ -99,7 +104,7 @@ def get_pill_info(pill_name):
 
 
 def load_class_names(yaml_path):
-    # dataset.yaml의 'names' 키: YOLO 클래스 인덱스 → 약품명 리스트
+    """dataset.yaml의 'names' 키에서 YOLO 클래스 인덱스 → 약품명 리스트를 로드한다."""
     with open(yaml_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data["names"]
@@ -113,7 +118,7 @@ def detect_pills(image_path, model_path, yaml_path, score_threshold=0.5):
     동일 클래스 중 confidence가 가장 높은 박스 하나만 대표값으로 사용한다.
 
     반환 형태:
-    [{"name": "놀텍정 10mg", "confidence": 96.3, "info": {...}}, ...]
+    [{"name": "놀텍정 10mg", "confidence": 96.3, "crop_image": "<base64>", "info": {...}}, ...]
     """
     class_names = load_class_names(yaml_path)
     model = YOLO(str(model_path))
@@ -124,14 +129,15 @@ def detect_pills(image_path, model_path, yaml_path, score_threshold=0.5):
     if result.boxes is None or len(result.boxes) == 0:
         return []
 
-    # 클래스별 최대 confidence와 해당 bbox 저장
-    detected = {}
+    # 클래스별로 confidence가 가장 높은 박스 하나만 선택
+    detected = {}  # name → (conf, bbox_xyxy)
     for label, conf, box in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu(), result.boxes.xyxy.cpu()):
         name = class_names[int(label.item())]
         conf_val = float(conf.item())
         if name not in detected or conf_val > detected[name][0]:
             detected[name] = (conf_val, box.tolist())
 
+    # bbox 영역을 잘라 base64로 인코딩 — Flutter에서 이미지로 바로 표시
     img = Image.open(image_path)
 
     output = []

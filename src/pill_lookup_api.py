@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 # src 디렉토리를 sys.path에 추가해 pill_lookup을 직접 import할 수 있게 한다
-# (src/__init__.py 없이 uvicorn src.api:app 형태로 실행하기 때문)
+# (src/__init__.py 없이 uvicorn src.pill_lookup_api:app 형태로 실행하기 때문)
 sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
@@ -22,6 +22,8 @@ YAML_PATH = os.getenv("YAML_PATH")
 
 app = FastAPI(title="Medicine Detection API")
 
+# Flutter 웹(localhost:8080)에서 API(localhost:9000)를 호출할 때 브라우저의 CORS 정책에 막히므로
+# 모든 origin을 허용하는 미들웨어를 추가한다
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,9 +51,10 @@ async def predict(image: UploadFile = File(...)):
 
     파이프라인:
     1. 업로드된 이미지를 임시 파일로 저장
-    2. YOLO 모델로 약 탐지 → 클래스명 + confidence 추출
-    3. 각 약품명을 식약처 API에 조회 → 효능/복용법/주의사항 수집
-    4. 임시 파일 삭제 후 JSON 반환
+    2. YOLO 모델로 약 탐지 → 클래스명 + confidence + bbox 추출
+    3. bbox 영역을 잘라 base64로 인코딩
+    4. 각 약품명을 식약처 API에 조회 → 효능/복용법/주의사항 수집
+    5. 임시 파일 삭제 후 JSON 반환
 
     응답 예시:
     {
@@ -59,6 +62,7 @@ async def predict(image: UploadFile = File(...)):
         {
           "name": "놀텍정 10mg",
           "confidence": 96.3,
+          "crop_image": "<base64>",
           "info": {"약품명": "...", "효능": "...", "복용법": "...", "주의사항": "..."}
         }
       ]
@@ -71,7 +75,7 @@ async def predict(image: UploadFile = File(...)):
     # YOLO는 확장자로 이미지 파일 여부를 판단하므로 반드시 포함해야 함
     suffix = (Path(image.filename).suffix if image.filename else "") or ".jpg"
 
-    # uuid4로 충돌 없는 임시 파일명 생성
+    # uuid4로 충돌 없는 임시 파일명 생성 (동시 요청 시 파일명 충돌 방지)
     tmp_path = Path(tempfile.gettempdir()) / f"{uuid.uuid4()}{suffix}"
 
     try:
