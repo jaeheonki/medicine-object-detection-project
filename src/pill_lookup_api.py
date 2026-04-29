@@ -2,7 +2,10 @@ import os
 import sys
 import uuid
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
+
+import gdown  # type: ignore[import-untyped]
 
 # src 디렉토리를 sys.path에 추가해 pill_lookup을 직접 import할 수 있게 한다
 # (src/__init__.py 없이 uvicorn src.pill_lookup_api:app 형태로 실행하기 때문)
@@ -19,8 +22,42 @@ load_dotenv()
 # 모델 경로와 yaml 경로는 .env에서 관리 (환경마다 경로가 다를 수 있으므로 코드에 하드코딩하지 않음)
 MODEL_PATH = os.getenv("MODEL_PATH")
 YAML_PATH = os.getenv("YAML_PATH")
+MODEL_GDRIVE_ID = os.getenv("MODEL_GDRIVE_ID")
+YAML_GDRIVE_ID = os.getenv("YAML_GDRIVE_ID")
 
-app = FastAPI(title="Medicine Detection API")
+# checkpoints 폴더는 프로젝트 루트 기준
+CHECKPOINTS_DIR = Path(__file__).resolve().parent.parent / "checkpoints"
+
+
+def _ensure_model_files():
+    """서버 시작 시 모델 파일이 없으면 구글 드라이브에서 자동으로 다운로드한다."""
+    CHECKPOINTS_DIR.mkdir(exist_ok=True)
+
+    files = [
+        (MODEL_GDRIVE_ID, Path(MODEL_PATH) if MODEL_PATH else CHECKPOINTS_DIR / "best_map75_95.pt"),
+        (YAML_GDRIVE_ID,  Path(YAML_PATH)  if YAML_PATH  else CHECKPOINTS_DIR / "dataset.yaml"),
+    ]
+
+    for gdrive_id, dest in files:
+        if dest.exists():
+            print(f"[모델 확인] 이미 존재합니다: {dest.name}")
+            continue
+        if not gdrive_id:
+            print(f"[모델 확인] Drive ID 없음, 건너뜀: {dest.name}")
+            continue
+        print(f"[모델 다운로드] {dest.name} ...")
+        gdown.download(id=gdrive_id, output=str(dest), quiet=False)
+        print(f"[모델 다운로드] 완료: {dest.name}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 서버 시작 시 모델 파일 존재 여부 확인 후 필요하면 다운로드
+    _ensure_model_files()
+    yield
+
+
+app = FastAPI(title="Medicine Detection API", lifespan=lifespan)
 
 # Flutter 웹(localhost:8080)에서 API(localhost:9000)를 호출할 때 브라우저의 CORS 정책에 막히므로
 # 모든 origin을 허용하는 미들웨어를 추가한다
