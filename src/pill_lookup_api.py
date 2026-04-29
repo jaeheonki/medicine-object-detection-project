@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from pill_lookup import detect_pills  # type: ignore[import-not-found]
 
@@ -20,6 +21,13 @@ MODEL_PATH = os.getenv("MODEL_PATH")
 YAML_PATH = os.getenv("YAML_PATH")
 
 app = FastAPI(title="Medicine Detection API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(Exception)

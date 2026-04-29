@@ -1,11 +1,14 @@
 import os
 import re
 import html
+import base64
+import io
 import argparse
 import xml.etree.ElementTree as ET
 import requests
 from dotenv import load_dotenv
 from ultralytics import YOLO
+from PIL import Image
 import yaml
 
 load_dotenv()
@@ -17,27 +20,32 @@ API_KEY = os.getenv("MFDS_API_KEY")
 BASE_URL = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnDtlInq06"
 
 
-def parse_xml_text(xml_str, limit=100):
+def parse_xml_text(xml_str):
     """
     API 응답의 효능/용법/주의사항 필드는 XML 문자열로 오기 때문에
     태그를 제거하고 순수 텍스트만 추출한다.
-    결과가 limit 글자를 초과하면 잘라서 '...'을 붙인다.
     """
     if not xml_str:
         return "정보 없음"
     try:
         root = ET.fromstring(xml_str)
-        texts = [elem.text.strip() for elem in root.iter() if elem.text and elem.text.strip()]
-        text = " ".join(texts)
-
-        # XML 내부에 &nbsp; 같은 HTML 엔티티가 포함되는 경우가 있어 정리
-        text = html.unescape(text)       # &amp;nbsp; → &nbsp; → \xa0
-        text = text.replace("\xa0", " ") # non-breaking space → 일반 공백
-        text = " ".join(text.split())    # 연속 공백 정리
-
-        return text[:limit] + "..." if len(text) > limit else text
+        parts = []
+        for elem in root.iter():
+            if elem.text and elem.text.strip():
+                parts.append(elem.text.strip())
+            if elem.tail and elem.tail.strip():
+                parts.append(elem.tail.strip())
+        text = " ".join(parts)
     except ET.ParseError:
-        return "정보 없음"
+        text = xml_str
+
+    # XML/HTML 태그 제거 (파싱 후 남은 태그 포함)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html.unescape(text)
+    text = text.replace("\xa0", " ")
+    text = " ".join(text.split())
+
+    return text or "정보 없음"
 
 
 # API DB에서 약품명은 "놀텍정10밀리그램"처럼 용량을 한글로 표기하므로
@@ -116,17 +124,28 @@ def detect_pills(image_path, model_path, yaml_path, score_threshold=0.5):
     if result.boxes is None or len(result.boxes) == 0:
         return []
 
-    # 클래스별 최대 confidence 저장
+    # 클래스별 최대 confidence와 해당 bbox 저장
     detected = {}
-    for label, conf in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu()):
+    for label, conf, box in zip(result.boxes.cls.cpu(), result.boxes.conf.cpu(), result.boxes.xyxy.cpu()):
         name = class_names[int(label.item())]
-        detected[name] = max(detected.get(name, 0.0), float(conf.item()))
+        conf_val = float(conf.item())
+        if name not in detected or conf_val > detected[name][0]:
+            detected[name] = (conf_val, box.tolist())
+
+    img = Image.open(image_path)
 
     output = []
-    for name, conf in detected.items():
+    for name, (conf, bbox) in detected.items():
+        x1, y1, x2, y2 = [int(v) for v in bbox]
+        crop = img.crop((x1, y1, x2, y2))
+        buf = io.BytesIO()
+        crop.save(buf, format="JPEG")
+        crop_b64 = base64.b64encode(buf.getvalue()).decode()
+
         output.append({
             "name": name,
             "confidence": round(conf * 100, 1),
+            "crop_image": crop_b64,
             "info": get_pill_info(name),
         })
     return output
