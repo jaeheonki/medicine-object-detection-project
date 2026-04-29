@@ -17,13 +17,16 @@ from ultralytics import YOLO
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchvision.ops import box_iou
 
-from utils import download_data
-from annotation_mapping import run_annotation_mapping
+from utils import download_data, extract_extra_data
+from annotation_mapping import run_annotation_mapping, fix_annotation_dir
 from json_to_txt import json_to_txt, split_yolo_dataset, build_global_class_map
 from model_utils import calc_precision_recall
 
 
-def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_images_dir, yolo_dataset_dir):
+from pathlib import Path
+
+
+def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_images_dir, yolo_dataset_dir, extra_ann_dir=None):
     data_dir = Path(data_dir)
     train_ann_dir = Path(train_ann_dir)
     merged_ann_dir = Path(merged_ann_dir)
@@ -36,11 +39,36 @@ def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_im
     else:
         print("데이터가 이미 존재합니다. 다운로드를 건너뜁니다.")
 
+    if extra_ann_dir is not None:
+        extra_ann_dir = Path(extra_ann_dir)
+        extra_ann_dir.mkdir(parents=True, exist_ok=True)
+        train_images_dir.mkdir(parents=True, exist_ok=True)
+
+        extract_extra_data(
+            label_out_dir=extra_ann_dir,
+            image_out_dir=train_images_dir,
+        )
+
+        print("추가 데이터 다운로드 완료")
+        print("추가 원본 어노테이션 저장 위치:", extra_ann_dir)
+        print("추가 이미지 저장 위치:", train_images_dir)
+
     if not merged_ann_dir.exists():
+        if extra_ann_dir is not None and Path(extra_ann_dir).exists():
+            fixed_extra_ann_dir = train_ann_dir / "fixed_extra_annotations"
+            fixed_extra_ann_dir.mkdir(parents=True, exist_ok=True)
+
+            fix_annotation_dir(
+                input_dir=Path(extra_ann_dir),
+                output_dir=fixed_extra_ann_dir,
+            )
+            print("새 어노테이션 생성 완료:", fixed_extra_ann_dir)
+
         result = run_annotation_mapping(
             annotation_root_dir=train_ann_dir,
             output_dir=merged_ann_dir,
         )
+
         print("파싱 성공:", len(result["parsed_list"]))
         print("파싱 실패:", len(result["failed_files"]))
         print("병합 이미지 수:", len(result["merged_results"]))

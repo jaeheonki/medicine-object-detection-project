@@ -199,6 +199,86 @@ def build_merge_summary_df(merged_results):
 
     return pd.DataFrame(rows)
 
+# dl_name과 item_sq를 이용해서 categori_id를 만들고 저장하는 함수
+def fix_single_annotation_json(json_path, output_dir):
+    json_path = Path(json_path)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if "images" not in data or len(data["images"]) == 0:
+        raise ValueError(f"images 정보가 없습니다: {json_path}")
+
+    image_info = data["images"][0]
+
+    drug_name = image_info.get("dl_name")
+    item_seq = image_info.get("item_seq")
+
+    if drug_name is None or str(drug_name).strip() == "":
+        raise ValueError(f"dl_name이 없습니다: {json_path}")
+
+    if item_seq is None:
+        raise ValueError(f"item_seq가 없습니다: {json_path}")
+
+    category_id = int(item_seq)
+
+    # categories를 실제 약 정보 기준으로 재작성
+    data["categories"] = [
+        {
+            "supercategory": "pill",
+            "id": category_id,
+            "name": drug_name,
+        }
+    ]
+
+    # annotations의 category_id도 같은 값으로 변경
+    for ann in data.get("annotations", []):
+        ann["category_id"] = category_id
+
+    output_path = output_dir / json_path.name
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+    return output_path
+
+# 실제로 사용할 함수
+def fix_annotation_dir(input_dir, output_dir):
+    input_dir = Path(input_dir)
+    output_dir = Path(output_dir)
+
+    success = []
+    failed = []
+
+    json_paths = sorted(input_dir.rglob("*.json"))
+
+    for json_path in json_paths:
+        try:
+            saved_path = fix_single_annotation_json(
+                json_path=json_path,
+                output_dir=output_dir,
+            )
+            success.append(str(saved_path))
+        except Exception as e:
+            failed.append(
+                {
+                    "json_path": str(json_path),
+                    "error": str(e),
+                }
+            )
+
+    print(f"전체 JSON 수: {len(json_paths)}")
+    print(f"변환 성공: {len(success)}")
+    print(f"변환 실패: {len(failed)}")
+
+    if failed:
+        print("\n실패 예시:")
+        for item in failed[:10]:
+            print(item)
+
+    return success, failed
 
 # 실제 import 해서 실행할 함수
 def run_annotation_mapping(
