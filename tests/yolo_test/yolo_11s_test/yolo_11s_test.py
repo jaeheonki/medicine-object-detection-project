@@ -12,6 +12,7 @@ TRAIN_ANN_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_annotations"
 MERGED_ANN_DIR = DATA_DIR / "merged_annotations"
 YOLO_TXT_DIR = DATA_DIR / "sprint_ai_project1_data" / "YOLO_txt"
 TRAIN_IMAGES_DIR = DATA_DIR / "sprint_ai_project1_data" / "train_images"
+EXTRA_DATA_DIR = PROJECT_ROOT / "extra_data"
 YOLO_DATASET_DIR = DATA_DIR / "yolo_dataset"
 YAML_PATH = YOLO_DATASET_DIR / "dataset.yaml"
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "yolo_11s"
@@ -19,7 +20,7 @@ MODEL_NAME = "yolo11s.pt"
 
 
 def main():
-    prepare_data(DATA_DIR, TRAIN_ANN_DIR, MERGED_ANN_DIR, YOLO_TXT_DIR, TRAIN_IMAGES_DIR, YOLO_DATASET_DIR)
+    prepare_data(DATA_DIR, TRAIN_ANN_DIR, MERGED_ANN_DIR, YOLO_TXT_DIR, TRAIN_IMAGES_DIR, YOLO_DATASET_DIR, EXTRA_DATA_DIR)
     create_yaml(YAML_PATH, YOLO_DATASET_DIR, MERGED_ANN_DIR)
     custom_history, save_dir = train(MODEL_NAME, YAML_PATH, OUTPUT_DIR, YOLO_DATASET_DIR, epochs=100, batch=16)
     print_summary(custom_history, MODEL_NAME)
