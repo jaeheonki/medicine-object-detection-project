@@ -10,3 +10,4 @@ sprint_ai_project1_data/
 *.zip
 .vscode/
 .bkit/
+checkpoints/*.pt
