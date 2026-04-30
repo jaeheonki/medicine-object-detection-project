@@ -105,12 +105,15 @@ def get_pill_info(pill_name):
 
     YOLO 클래스명의 영문 용량('10mg')은 한글('10밀리그램')로 변환 후 검색한다.
     """
+    # 1차 검색명: 괄호 포함 원본에서 용량만 한글 변환
     search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
+    # 2차 검색명: 괄호 제거 후 용량 변환 — 1차 검색 실패 시 폴백용
+    search_name_stripped = DOSAGE_PATTERN.sub(_dosage_to_korean, re.sub(r"\s*\([^)]*\)", "", pill_name).strip())
 
     info = {"약품명": None, "효능": "정보 없음", "복용법": "정보 없음", "주의사항": "정보 없음", "이미지": None}
 
-    # 1차: 식약처 제품허가정보 API
-    items = _query_api(search_name)
+    # 1차: 식약처 제품허가정보 API (괄호 포함 원본으로 먼저 시도, 없으면 괄호 제거 후 재시도)
+    items = _query_api(search_name) or _query_api(search_name_stripped)
     if items:
         item = items[0]
         info["약품명"] = item.get("ITEM_NAME")
@@ -121,7 +124,7 @@ def get_pill_info(pill_name):
     # 2차: "정보 없음"인 필드가 있거나 이미지가 없으면 e약은요 API로 보완
     missing = [k for k in ["효능", "복용법", "주의사항"] if info[k] == "정보 없음"]
     if EYAK_API_KEY and (missing or info["이미지"] is None):
-        for query in [search_name, pill_name]:
+        for query in [search_name, search_name_stripped, pill_name]:
             eyak_items = _query_eyak_api(query)
             if eyak_items:
                 eyak_item = eyak_items[0]
