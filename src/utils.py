@@ -1,9 +1,20 @@
 # %% 구글 공유 데이터 다운로드
 def download_data(extract_path="./data"):
-    import gdown, zipfile
-    gdown.download(f"https://drive.google.com/uc?id=1YgTmJPuppvarVklbkxAO7SK11fI-Siim", "알약데이터.zip", quiet=False)
-    with zipfile.ZipFile("알약데이터.zip", "r") as zip_ref:
+    import zipfile
+    from huggingface_hub import hf_hub_download
+    from pathlib import Path
+
+    print("데이터 다운로드 중...")
+    zip_path = hf_hub_download(
+        repo_id="Jaeheonki/pills_extra_data",
+        filename="알약데이터.zip",
+        repo_type="dataset",
+        local_dir="/content"
+    )
+
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(extract_path)
+
     print("데이터 다운로드 완료!")
 
 def extract_extra_data(label_out_dir, image_out_dir):
