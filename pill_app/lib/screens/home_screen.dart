@@ -10,8 +10,9 @@ const String apiUrl = 'http://localhost:9000/predict';
 
 class HomeScreen extends StatefulWidget {
   final void Function(List<dynamic> results) onResults;
+  final VoidCallback? onAlarmTap;
 
-  const HomeScreen({super.key, required this.onResults});
+  const HomeScreen({super.key, required this.onResults, this.onAlarmTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -102,24 +103,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const Spacer(),
-              // 알림 벨 아이콘 (뱃지 포함)
-              Stack(
-                children: [
-                  const Icon(Icons.notifications_outlined,
-                      color: Colors.white, size: 26),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.redAccent,
-                        shape: BoxShape.circle,
+              // 알림 벨 아이콘 — 탭 시 복약 알림 탭으로 이동
+              GestureDetector(
+                onTap: widget.onAlarmTap,
+                child: Stack(
+                  children: [
+                    const Icon(Icons.notifications_outlined,
+                        color: Colors.white, size: 26),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -133,8 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── 이미지 미리보기 박스 ──
-            Container(
-              height: 200,
+            Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 180, maxHeight: 260),
+            child: Container(
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(20),
@@ -162,6 +168,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+            ),
+            ),
             ),
             const SizedBox(height: 20),
 
@@ -228,42 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // ──────────────────────────── 하단 내비게이션 ────────────────────────
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: primaryColor,
-          unselectedItemColor: textHint,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          currentIndex: 1, // 홈 탭 활성화
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mail_outline),
-              label: '메시지',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              label: '홈',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              label: '설정',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

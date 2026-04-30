@@ -35,9 +35,13 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
+// 탭 인덱스: 0 리스트 / 1 홈 / 2 복약알림 / 3 설정
+const Color _primaryColor = Color(0xFF3629B7);
+const Color _cardColor    = Color(0xFFFFFFFF);
+const Color _textHint     = Color(0xFF898989);
+
 class _MainPageState extends State<MainPage> {
-  // 현재 선택된 탭 인덱스 (0: 약 목록, 1: 홈, 2: 복약 알림)
-  int _selectedIndex = 1; // 홈이 기본 탭 (가운데)
+  int _selectedIndex = 1; // 홈이 기본 탭
 
   // 분석 결과 목록
   // null이면 홈 화면을 표시하고, 값이 있으면 결과 화면으로 전환된다
@@ -65,10 +69,9 @@ class _MainPageState extends State<MainPage> {
       case 1:
         // 홈 탭 — 분석 결과 유무에 따라 홈/결과 화면 전환
         if (_results == null) {
-          // 분석 결과 없음 → 이미지 선택 및 분석 요청 화면
           return HomeScreen(
-            // 분석 완료 시 결과를 받아 상태를 업데이트하면 결과 화면으로 전환된다
             onResults: (results) => setState(() => _results = results),
+            onAlarmTap: () => setState(() => _selectedIndex = 2),
           );
         }
 
@@ -82,12 +85,13 @@ class _MainPageState extends State<MainPage> {
         );
 
       case 2:
-        // 복약 알림 탭 — 등록된 알림 목록 전달
-        // onCancelSchedule을 통해 AlarmScreen에서 삭제 요청을 받는다
         return AlarmScreen(
           schedules: _schedules,
           onCancelSchedule: _cancelSchedule,
         );
+
+      case 3:
+        return const Center(child: Text('설정 화면 준비 중'));
 
       default:
         return const SizedBox.shrink();
@@ -97,27 +101,45 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 탭에 따라 화면을 교체한다
-      // Navigator.push 대신 상태 기반 전환을 사용해 하단 바가 항상 표시된다
       body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        // 탭 선택 시 인덱스를 업데이트하면 _buildBody()가 다시 호출된다
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.medication),
-            label: '약 목록',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.alarm),
-            label: '복약 알림',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: _cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: _primaryColor,
+          unselectedItemColor: _textHint,
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.medication_outlined),
+              label: '약 목록',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.alarm_outlined),
+              label: '복약 알림',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              label: '설정',
+            ),
+          ],
+        ),
       ),
     );
   }
