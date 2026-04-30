@@ -220,11 +220,12 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         epochs=epochs,
         imgsz=imgsz,
         batch=batch,
-        optimizer = optimizer,
+        optimizer=optimizer,
         lr0=lr0,
         lrf=lrf,
         fliplr=fliplr,
         warmup_epochs=warmup_epochs,
+        amp=True,
         project=str(output_dir),
         name="train"
     )
@@ -352,6 +353,42 @@ def plot_predictions(save_dir, yolo_dataset_dir, model_name, n=5):
     plt.tight_layout()
     plt.savefig(str(save_dir / "predictions.png"))
     print("예측 시각화 저장 완료:", save_dir / "predictions.png")
+
+
+def save_to_drive(save_dir):
+    """학습 결과 파일을 구글 드라이브에 복사한다.
+
+    Colab에서 drive.mount('/content/drive') 실행 후 호출할 것.
+    저장 경로: /content/drive/MyDrive/medicine_res/
+    """
+    save_dir = Path(save_dir)
+    drive_save_dir = Path("/content/drive/MyDrive/medicine_res")
+    project_root = Path("/content/medicine-object-detection-project")
+
+    if not Path("/content/drive").exists():
+        print("구글 드라이브가 마운트되어 있지 않습니다.")
+        print("  from google.colab import drive; drive.mount('/content/drive')")
+        return
+
+    drive_save_dir.mkdir(parents=True, exist_ok=True)
+
+    submission_name = f"{save_dir.parent.name}_{save_dir.name}_submission.csv"
+    candidates = [
+        save_dir / "weights" / "best_map75_95.pt",
+        save_dir / "training_history.png",
+        save_dir / "predictions.png",
+        save_dir / "confusion_matrix_normalized.png",
+        project_root / "submission" / submission_name,
+    ]
+
+    for src in candidates:
+        if src.exists():
+            shutil.copy(str(src), str(drive_save_dir / src.name))
+            print(f"  저장: {src.name}")
+        else:
+            print(f"  없음 (건너뜀): {src.name}")
+
+    print(f"드라이브 저장 완료 → {drive_save_dir}")
 
 
 def print_summary(custom_history, model_name):
