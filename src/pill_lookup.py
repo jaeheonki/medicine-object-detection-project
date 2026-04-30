@@ -101,37 +101,41 @@ def get_pill_info(pill_name):
     약품명으로 약 정보를 조회한다.
 
     1차: 식약처 제품허가정보 API (전문/일반의약품 모두 포함)
-    2차: e약은요 API (1차 결과 없을 때 폴백)
+    2차: e약은요 API로 "정보 없음"인 필드만 보완
 
     YOLO 클래스명의 영문 용량('10mg')은 한글('10밀리그램')로 변환 후 검색한다.
     """
     search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
 
+    info = {"약품명": None, "효능": "정보 없음", "복용법": "정보 없음", "주의사항": "정보 없음"}
+
     # 1차: 식약처 제품허가정보 API
     items = _query_api(search_name)
     if items:
         item = items[0]
-        return {
-            "약품명": item.get("ITEM_NAME"),
-            "효능": parse_xml_text(item.get("EE_DOC_DATA")),
-            "복용법": parse_xml_text(item.get("UD_DOC_DATA")),
-            "주의사항": parse_xml_text(item.get("NB_DOC_DATA")),
-        }
+        info["약품명"] = item.get("ITEM_NAME")
+        info["효능"] = parse_xml_text(item.get("EE_DOC_DATA"))
+        info["복용법"] = parse_xml_text(item.get("UD_DOC_DATA"))
+        info["주의사항"] = parse_xml_text(item.get("NB_DOC_DATA"))
 
-    # 2차: e약은요 API (한글 변환명 → 원래 이름 순으로 시도)
-    if EYAK_API_KEY:
+    # 2차: "정보 없음"인 필드가 있으면 e약은요 API로 보완 (한글 변환명 → 원래 이름 순으로 시도)
+    missing = [k for k in ["효능", "복용법", "주의사항"] if info[k] == "정보 없음"]
+    if EYAK_API_KEY and missing:
         for query in [search_name, pill_name]:
-            items = _query_eyak_api(query)
-            if items:
-                item = items[0]
-                return {
-                    "약품명": item.get("itemName"),
-                    "효능": item.get("efcyQesitm") or "정보 없음",
-                    "복용법": item.get("useMethodQesitm") or "정보 없음",
-                    "주의사항": item.get("atpnQesitm") or "정보 없음",
-                }
+            eyak_items = _query_eyak_api(query)
+            if eyak_items:
+                eyak_item = eyak_items[0]
+                if info["약품명"] is None:
+                    info["약품명"] = eyak_item.get("itemName")
+                if info["효능"] == "정보 없음":
+                    info["효능"] = eyak_item.get("efcyQesitm") or "정보 없음"
+                if info["복용법"] == "정보 없음":
+                    info["복용법"] = eyak_item.get("useMethodQesitm") or "정보 없음"
+                if info["주의사항"] == "정보 없음":
+                    info["주의사항"] = eyak_item.get("atpnQesitm") or "정보 없음"
+                break
 
-    return None
+    return info if info["약품명"] is not None else None
 
 
 def load_class_names(yaml_path):
