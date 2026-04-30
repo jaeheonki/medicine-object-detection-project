@@ -64,16 +64,45 @@ class _PillListScreenState extends State<PillListScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('인식 가능한 약 목록 (${_classes.length}개)')),
+      backgroundColor: const Color(0xFFF8F7FF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8F7FF),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          '알약 찾기 결과',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.black87, size: 30),
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
         itemCount: _classes.length,
         itemBuilder: (context, index) => _PillCard(name: _classes[index]),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF3626B8),
+        shape: const CircleBorder(),
+        onPressed: () {
+          // TODO: 카메라 / 이미지 업로드 기능 연결
+        },
+        child: const Icon(Icons.add, color: Colors.white, size: 36),
+      ),
     );
+    }
   }
-}
-
 // 약품 카드 — 상세정보 버튼을 즉시 표시하고, 클릭 시에만 API를 호출한다
 // 리스트 로드 시 56개 동시 API 호출을 방지하기 위해 on-demand 방식을 사용한다
 class _PillCard extends StatefulWidget {
@@ -161,40 +190,91 @@ class _PillCardState extends State<_PillCard> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            _placeholder(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                widget.name,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ),
-            // 상세정보 버튼 — 항상 즉시 표시
-            TextButton(
-              onPressed: () => _showDetail(context),
-              child: const Text('상세정보'),
-            ),
-          ],
+Widget build(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 18),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 16,
+          offset: const Offset(0, 8),
         ),
-      ),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      width: 70, height: 70,
-      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-      child: const Icon(Icons.medication, color: Colors.grey, size: 36),
-    );
-  }
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _placeholder(),
+        const SizedBox(width: 18),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.name,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '알약에 관한 내용 알약내용입니다. 복용법과 주의사항을 확인할 수 있습니다.',
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: Color(0xFF8A8A8A),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => _showDetail(context),
+                child: const Text(
+                  '...더보기',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF8A8A8A),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
+
+Widget _placeholder() {
+  return Container(
+    width: 120,
+    height: 120,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE9E9E9),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: const Text(
+      '알약 사진',
+      style: TextStyle(
+        color: Color(0xFF999999),
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
+}
+
+//
 
 // 상세정보 다이얼로그 내 라벨-값 행 위젯
 class _DetailRow extends StatelessWidget {
