@@ -269,7 +269,7 @@ def fix_annotation_dir(input_dir, output_dir):
                 }
             )
 
-    print(f"전체 JSON 수: {len(json_paths)}")
+    print(f"JSON 수: {len(json_paths)}")
     print(f"변환 성공: {len(success)}")
     print(f"변환 실패: {len(failed)}")
 

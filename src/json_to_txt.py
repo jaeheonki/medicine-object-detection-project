@@ -38,28 +38,27 @@ def convert_custom_json_to_yolo_txt(json_path, output_dir, class_map=None):
     txt_path = os.path.join(output_dir, txt_name)
 
     yolo_lines = []
+    skipped = 0
 
     for ann in annotations:  # ann에는 각 알약들의 bbox가 존재
         # bbox_xywh = [x_min, y_min, width, height]
         bbox = ann.get("bbox_xywh")
 
-        if bbox is None:
-            print("bbox_xywh가 None이라 건너뜀:", ann)
-            continue
-
-        if len(bbox) != 4:
-            print("bbox_xywh 길이가 이상해서 건너뜀:", ann)
+        if bbox is None or len(bbox) != 4:
+            skipped += 1
             continue
 
         x_min, y_min, box_w, box_h = bbox
 
         if box_w <= 0 or box_h <= 0:
+            skipped += 1
             continue
 
         category_id = ann["raw_annotation"]["category_id"]
 
         # class_map에 없는 카테고리는 건너뜀
         if category_id not in class_map:
+            skipped += 1
             continue
 
         class_id = class_map[category_id]
@@ -80,7 +79,7 @@ def convert_custom_json_to_yolo_txt(json_path, output_dir, class_map=None):
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("\n".join(yolo_lines))
 
-    return class_map, txt_path
+    return class_map, txt_path, skipped
 
 
 # YOLO 모델에서는 약의 고유번호를 의미하는 category_id가 보통 0 ~ N까지의 연속된 정수로 이루어져 있기 때문에 매핑 작업을 진행하는 함수
@@ -122,11 +121,14 @@ def json_to_txt(
 
     class_map, class_names = build_global_class_map(json_dir)
 
+    total_skipped = 0
     for json_file in Path(json_dir).glob("*.json"):
-        convert_custom_json_to_yolo_txt(
+        _, _, skipped = convert_custom_json_to_yolo_txt(
             json_path=str(json_file), output_dir=output_dir, class_map=class_map
         )
+        total_skipped += skipped
 
+    print(f"bbox 오류로 제외된 annotation 수: {total_skipped}")
     return class_map, class_names
 
 
