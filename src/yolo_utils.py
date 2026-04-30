@@ -54,18 +54,29 @@ def prepare_data(data_dir, train_ann_dir, merged_ann_dir, yolo_txt_dir, train_im
         print("추가 이미지 저장 위치:", train_images_dir)
 
     if not merged_ann_dir.exists():
-        if extra_ann_dir is not None and Path(extra_ann_dir).exists():
-            fixed_extra_ann_dir = train_ann_dir / "fixed_extra_annotations"
-            fixed_extra_ann_dir.mkdir(parents=True, exist_ok=True)
+        # 원본과 추가 데이터의 category_id를 item_seq 기준으로 통일해
+        # 같은 약이 두 데이터셋에서 다른 category_id를 가지는 중복 클래스 문제를 방지한다
+        fixed_all_ann_dir = data_dir / "fixed_annotations"
+        fixed_all_ann_dir.mkdir(parents=True, exist_ok=True)
 
+        # 원본 어노테이션 fix: category_id → item_seq
+        fix_annotation_dir(
+            input_dir=train_ann_dir,
+            output_dir=fixed_all_ann_dir,
+        )
+        print("원본 어노테이션 fix 완료:", fixed_all_ann_dir)
+
+        # 추가 어노테이션 fix: category_id → item_seq (같은 폴더에 합침)
+        if extra_ann_dir is not None and Path(extra_ann_dir).exists():
             fix_annotation_dir(
                 input_dir=Path(extra_ann_dir),
-                output_dir=fixed_extra_ann_dir,
+                output_dir=fixed_all_ann_dir,
             )
-            print("새 어노테이션 생성 완료:", fixed_extra_ann_dir)
+            print("추가 어노테이션 fix 완료:", fixed_all_ann_dir)
 
+        # item_seq로 통일된 어노테이션만으로 병합 실행
         result = run_annotation_mapping(
-            annotation_root_dir=train_ann_dir,
+            annotation_root_dir=fixed_all_ann_dir,
             output_dir=merged_ann_dir,
         )
 
