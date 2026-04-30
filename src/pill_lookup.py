@@ -14,10 +14,13 @@ import yaml
 load_dotenv()
 
 API_KEY = os.getenv("MFDS_API_KEY")
+EYAK_API_KEY = os.getenv("EYAK_API_KEY")
 
-# 전문/일반의약품을 모두 포함하는 식품의약품안전처 제품허가정보 API
-# (e약은요 API는 일반의약품만 지원하므로 이 API를 사용)
+# 전문/일반의약품을 모두 포함하는 식품의약품안전처 제품허가정보 API (1차)
 BASE_URL = "https://apis.data.go.kr/1471000/DrugPrdtPrmsnInfoService07/getDrugPrdtPrmsnDtlInq06"
+
+# e약은요 API — 1차 조회 실패 시 폴백 (2차)
+EYAK_BASE_URL = "https://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList"
 
 
 def parse_xml_text(xml_str):
@@ -80,27 +83,55 @@ def _query_api(name):
     return response.json().get("body", {}).get("items", [])
 
 
+def _query_eyak_api(name):
+    """e약은요 API에 약품명으로 단건 조회 요청. 결과 items 리스트를 반환한다."""
+    params = {
+        "serviceKey": EYAK_API_KEY,
+        "itemName": name,
+        "type": "json",
+        "numOfRows": 1,
+    }
+    response = requests.get(EYAK_BASE_URL, params=params)
+    response.raise_for_status()
+    return response.json().get("body", {}).get("items", [])
+
+
 def get_pill_info(pill_name):
     """
-    약품명으로 식약처 API를 조회해 효능/복용법/주의사항을 반환한다.
+    약품명으로 약 정보를 조회한다.
 
-    YOLO 클래스명에는 '놀텍정 10mg'처럼 영문 용량이 붙어 있지만,
-    API DB는 '놀텍정10밀리그램'으로 저장되어 있어 변환 후 검색한다.
+    1차: 식약처 제품허가정보 API (전문/일반의약품 모두 포함)
+    2차: e약은요 API (1차 결과 없을 때 폴백)
+
+    YOLO 클래스명의 영문 용량('10mg')은 한글('10밀리그램')로 변환 후 검색한다.
     """
     search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
+
+    # 1차: 식약처 제품허가정보 API
     items = _query_api(search_name)
+    if items:
+        item = items[0]
+        return {
+            "약품명": item.get("ITEM_NAME"),
+            "효능": parse_xml_text(item.get("EE_DOC_DATA")),
+            "복용법": parse_xml_text(item.get("UD_DOC_DATA")),
+            "주의사항": parse_xml_text(item.get("NB_DOC_DATA")),
+        }
 
-    if not items:
-        return None
+    # 2차: e약은요 API (한글 변환명 → 원래 이름 순으로 시도)
+    if EYAK_API_KEY:
+        for query in [search_name, pill_name]:
+            items = _query_eyak_api(query)
+            if items:
+                item = items[0]
+                return {
+                    "약품명": item.get("itemName"),
+                    "효능": item.get("efcyQesitm") or "정보 없음",
+                    "복용법": item.get("useMethodQesitm") or "정보 없음",
+                    "주의사항": item.get("atpnQesitm") or "정보 없음",
+                }
 
-    # EE: 효능효과, UD: 용법용량, NB: 사용상주의사항 (XML 문자열 → 텍스트 변환)
-    item = items[0]
-    return {
-        "약품명": item.get("ITEM_NAME"),
-        "효능": parse_xml_text(item.get("EE_DOC_DATA")),
-        "복용법": parse_xml_text(item.get("UD_DOC_DATA")),
-        "주의사항": parse_xml_text(item.get("NB_DOC_DATA")),
-    }
+    return None
 
 
 def load_class_names(yaml_path):
