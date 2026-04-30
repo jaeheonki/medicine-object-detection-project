@@ -17,6 +17,7 @@ dependencies = [
     "ultralytics>=8.0",
     "transformers>=4.0",
     "timm>=0.9",
+    "huggingface-hub>=1.12.2",
 ]
 
 [[tool.uv.index]]
