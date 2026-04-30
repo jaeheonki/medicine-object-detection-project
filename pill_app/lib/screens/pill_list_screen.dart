@@ -274,7 +274,7 @@ Widget _placeholder() {
   );
 }
 
-//
+} // end of _PillCardState
 
 // 상세정보 다이얼로그 내 라벨-값 행 위젯
 class _DetailRow extends StatelessWidget {
