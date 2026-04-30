@@ -78,7 +78,7 @@ def _query_api(name):
         "type": "json",
         "numOfRows": 1,
     }
-    response = requests.get(BASE_URL, params=params)
+    response = requests.get(BASE_URL, params=params, timeout=10)
     response.raise_for_status()
     return response.json().get("body", {}).get("items", [])
 
@@ -91,7 +91,7 @@ def _query_eyak_api(name):
         "type": "json",
         "numOfRows": 1,
     }
-    response = requests.get(EYAK_BASE_URL, params=params)
+    response = requests.get(EYAK_BASE_URL, params=params, timeout=10)
     response.raise_for_status()
     return response.json().get("body", {}).get("items", [])
 
@@ -107,7 +107,7 @@ def get_pill_info(pill_name):
     """
     search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
 
-    info = {"약품명": None, "효능": "정보 없음", "복용법": "정보 없음", "주의사항": "정보 없음"}
+    info = {"약품명": None, "효능": "정보 없음", "복용법": "정보 없음", "주의사항": "정보 없음", "이미지": None}
 
     # 1차: 식약처 제품허가정보 API
     items = _query_api(search_name)
@@ -118,9 +118,9 @@ def get_pill_info(pill_name):
         info["복용법"] = parse_xml_text(item.get("UD_DOC_DATA"))
         info["주의사항"] = parse_xml_text(item.get("NB_DOC_DATA"))
 
-    # 2차: "정보 없음"인 필드가 있으면 e약은요 API로 보완 (한글 변환명 → 원래 이름 순으로 시도)
+    # 2차: "정보 없음"인 필드가 있거나 이미지가 없으면 e약은요 API로 보완
     missing = [k for k in ["효능", "복용법", "주의사항"] if info[k] == "정보 없음"]
-    if EYAK_API_KEY and missing:
+    if EYAK_API_KEY and (missing or info["이미지"] is None):
         for query in [search_name, pill_name]:
             eyak_items = _query_eyak_api(query)
             if eyak_items:
@@ -133,6 +133,7 @@ def get_pill_info(pill_name):
                     info["복용법"] = eyak_item.get("useMethodQesitm") or "정보 없음"
                 if info["주의사항"] == "정보 없음":
                     info["주의사항"] = eyak_item.get("atpnQesitm") or "정보 없음"
+                info["이미지"] = eyak_item.get("itemImage")
                 break
 
     return info if info["약품명"] is not None else None

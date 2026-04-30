@@ -15,7 +15,7 @@ from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from pill_lookup import detect_pills  # type: ignore[import-not-found]
+from pill_lookup import detect_pills, get_pill_info, load_class_names  # type: ignore[import-not-found]
 
 load_dotenv()
 
@@ -125,3 +125,18 @@ async def predict(image: UploadFile = File(...)):
         tmp_path.unlink(missing_ok=True)
 
     return {"detected": detected}
+
+
+@app.get("/classes")
+def get_classes():
+    """dataset.yaml에서 인식 가능한 약품명 리스트를 반환한다."""
+    if YAML_PATH is None:
+        raise HTTPException(status_code=500, detail="YAML_PATH가 설정되지 않았습니다.")
+    return {"classes": load_class_names(YAML_PATH)}
+
+
+@app.get("/pill-info/{name}")
+def pill_info(name: str):
+    """약품명으로 상세 정보(효능/복용법/주의사항/이미지)를 반환한다."""
+    info = get_pill_info(name)
+    return {"info": info}
