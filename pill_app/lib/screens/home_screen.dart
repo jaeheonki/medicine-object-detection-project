@@ -104,7 +104,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _pickImage(ImageSource.gallery),
-                    icon: const Icon(Icons.photo),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                    icon: const Icon(Icons.photo, size: 22),
                     label: const Text('갤러리'),
                   ),
                 ),
@@ -112,7 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _pickImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                    icon: const Icon(Icons.camera_alt, size: 22),
                     label: const Text('카메라'),
                   ),
                 ),
@@ -122,13 +130,17 @@ class _HomeScreenState extends State<HomeScreen> {
             // 분석 버튼 — 이미지가 선택된 경우에만 활성화된다
             ElevatedButton.icon(
               onPressed: (_imageBytes != null && !_loading) ? _analyze : null,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                textStyle: const TextStyle(fontSize: 16),
+              ),
               icon: _loading
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.search),
+                  : const Icon(Icons.search, size: 22),
               label: Text(_loading ? '분석 중...' : '약 정보 조회'),
             ),
             // 오류 발생 시 메시지 표시
