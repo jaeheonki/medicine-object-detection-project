@@ -8,7 +8,14 @@ class AlarmScreen extends StatelessWidget {
   // ResultScreen에서 알림을 추가할 때마다 이 리스트가 갱신된다
   final List<Map<String, String>> schedules;
 
-  const AlarmScreen({super.key, required this.schedules});
+  // 삭제 버튼 클릭 시 MainPage의 _schedules에서 해당 일정을 제거한다
+  final void Function(int index) onCancelSchedule;
+
+  const AlarmScreen({
+    super.key,
+    required this.schedules,
+    required this.onCancelSchedule,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,20 +36,44 @@ class AlarmScreen extends StatelessWidget {
               itemCount: schedules.length,
               itemBuilder: (context, index) {
                 final s = schedules[index];
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: const Icon(Icons.alarm, color: Colors.teal, size: 36),
+                    leading: const Icon(
+                      Icons.alarm,
+                      color: Colors.teal,
+                      size: 36,
+                    ),
+
                     // 약품명
                     title: Text(
                       s['medicineName'] ?? '',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
+
                     // 복용량, 복약 시간, 메모
                     subtitle: Text(
                       '복용량: ${s['dosage']}  |  시간: ${s['time']}\n메모: ${s['memo']}',
                     ),
                     isThreeLine: true,
+
+                    // 복약 일정 취소 버튼
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: '복약 일정 취소',
+                      onPressed: () {
+                        final medicineName = s['medicineName'] ?? '복약';
+
+                        onCancelSchedule(index);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$medicineName 복약 일정이 취소되었습니다.'),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 );
               },

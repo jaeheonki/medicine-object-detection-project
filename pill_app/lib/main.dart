@@ -47,12 +47,21 @@ class _MainPageState extends State<MainPage> {
   // ResultScreen에서 알림을 추가하면 여기에 쌓이고, AlarmScreen에서 표시한다
   final List<Map<String, String>> _schedules = [];
 
+  // 복약 알림 삭제 함수
+  // AlarmScreen에서 삭제 버튼을 누르면 index를 받아 해당 일정을 제거한다
+  void _cancelSchedule(int index) {
+    setState(() {
+      _schedules.removeAt(index);
+    });
+  }
+
   // 현재 탭 인덱스에 따라 표시할 화면 위젯을 반환한다
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         // 약 목록 탭
         return const PillListScreen();
+
       case 1:
         // 홈 탭 — 분석 결과 유무에 따라 홈/결과 화면 전환
         if (_results == null) {
@@ -62,6 +71,7 @@ class _MainPageState extends State<MainPage> {
             onResults: (results) => setState(() => _results = results),
           );
         }
+
         // 분석 결과 있음 → 탐지된 약 카드 목록 화면
         return ResultScreen(
           results: _results!,
@@ -70,9 +80,15 @@ class _MainPageState extends State<MainPage> {
           // 알림 추가 → _schedules 리스트에 새 일정을 추가한다
           onAddSchedule: (schedule) => setState(() => _schedules.add(schedule)),
         );
+
       case 2:
         // 복약 알림 탭 — 등록된 알림 목록 전달
-        return AlarmScreen(schedules: _schedules);
+        // onCancelSchedule을 통해 AlarmScreen에서 삭제 요청을 받는다
+        return AlarmScreen(
+          schedules: _schedules,
+          onCancelSchedule: _cancelSchedule,
+        );
+
       default:
         return const SizedBox.shrink();
     }
@@ -81,7 +97,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 탭에 따라 화면을 교체한다 (Navigator.push 대신 상태 기반 전환을 사용해 하단 바가 항상 표시된다)
+      // 탭에 따라 화면을 교체한다
+      // Navigator.push 대신 상태 기반 전환을 사용해 하단 바가 항상 표시된다
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
