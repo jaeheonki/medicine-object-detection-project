@@ -6,14 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 // FastAPI 서버 주소 — 서버와 Flutter 앱이 같은 머신에서 실행될 때 사용
-// 실제 배포 시에는 서버 IP 또는 도메인으로 변경해야 한다
 const String apiUrl = 'http://localhost:9000/predict';
 
-// 홈 화면 — 이미지 선택 및 서버 분석 요청을 담당한다
-// 분석이 완료되면 onResults 콜백으로 결과를 MainPage에 전달하고,
-// MainPage가 ResultScreen으로 화면을 전환한다
 class HomeScreen extends StatefulWidget {
-  // 분석 결과를 MainPage로 전달하는 콜백
   final void Function(List<dynamic> results) onResults;
 
   const HomeScreen({super.key, required this.onResults});
@@ -23,25 +18,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Uint8List? _imageBytes; // 선택된 이미지의 바이트 데이터 (미리보기에 사용)
-  String? _fileName;      // 선택된 이미지 파일명 (서버 업로드 시 필요)
-  bool _loading = false;  // 분석 요청 중 여부 (버튼 비활성화 및 인디케이터 표시)
-  String? _errorMessage;  // 오류 발생 시 화면에 표시할 메시지
+  Uint8List? _imageBytes;
+  String? _fileName;
+  bool _loading = false;
+  String? _errorMessage;
 
-  // 갤러리 또는 카메라에서 이미지를 선택한다
-  // source에 ImageSource.gallery 또는 ImageSource.camera를 전달한다
+  // 테마 색상 — 컬러 차트 기준
+  static const Color primaryColor   = Color(0xFF3629B7); // 메인 컬러
+  static const Color bgColor        = Color(0xFFFAFAFA); // 배경 컬러
+  static const Color cardColor      = Color(0xFFFFFFFF); // 흰색 컬러
+  static const Color textMain       = Color(0xFF343434); // 메인 글씨
+  static const Color textSub        = Color(0xFF585858); // 서브 글씨
+  static const Color textHint       = Color(0xFF898989); // 본문·아이콘·버튼 테두리
+
   Future<void> _pickImage(ImageSource source) async {
     final picked = await ImagePicker().pickImage(source: source);
-    if (picked == null) return; // 사용자가 선택 취소한 경우
+    if (picked == null) return;
     final bytes = await picked.readAsBytes();
     setState(() {
       _imageBytes = bytes;
       _fileName = picked.name;
-      _errorMessage = null; // 이전 오류 메시지 초기화
+      _errorMessage = null;
     });
   }
 
-  // 선택된 이미지를 서버로 전송하고 분석 결과를 받아온다
   Future<void> _analyze() async {
     if (_imageBytes == null || _fileName == null) return;
     setState(() {
@@ -49,10 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _errorMessage = null;
     });
     try {
-      // multipart/form-data 형식으로 이미지를 업로드한다
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
       request.files.add(http.MultipartFile.fromBytes(
-        'image',       // FastAPI 엔드포인트의 파라미터명과 일치해야 함
+        'image',
         _imageBytes!,
         filename: _fileName!,
       ));
@@ -60,16 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final body = await response.stream.bytesToString();
       if (response.statusCode == 200) {
         final data = jsonDecode(body);
-        // 성공 시 MainPage의 onResults 콜백을 호출해 결과 화면으로 전환
         widget.onResults(data['detected'] ?? []);
       } else {
         setState(() => _errorMessage = '서버 오류: ${response.statusCode}');
       }
     } catch (e) {
-      // 서버가 꺼져있거나 네트워크 오류 발생 시
       setState(() => _errorMessage = '연결 실패: $e');
     } finally {
-      // 성공/실패 상관없이 로딩 상태 해제
       setState(() => _loading = false);
     }
   }
@@ -77,77 +73,271 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('약 정보 조회')),
+      backgroundColor: bgColor,
+      // ───────────────────────────── 상단 헤더 ─────────────────────────────
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.only(
+              left: 20, right: 20, top: 40, bottom: 12),
+          child: Row(
+            children: [
+              // 프로필 아바타
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white24,
+                child: const Icon(Icons.person, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                '안녕하세요, 00님',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              // 알림 벨 아이콘 (뱃지 포함)
+              Stack(
+                children: [
+                  const Icon(Icons.notifications_outlined,
+                      color: Colors.white, size: 26),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      // ─────────────────────────────── 본문 ────────────────────────────────
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '약 정보 조회',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
-            // 이미지를 선택한 경우 미리보기 표시
-            if (_imageBytes != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.memory(_imageBytes!, height: 200, fit: BoxFit.contain),
+            // ── 이미지 미리보기 박스 ──
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: textHint.withOpacity(0.2)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-            // 갤러리 / 카메라 선택 버튼 (웹에서는 카메라도 파일탐색기로 연결됨)
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                      textStyle: const TextStyle(fontSize: 16),
+              child: _imageBytes != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.memory(_imageBytes!,
+                          fit: BoxFit.contain),
+                    )
+                  : Center(
+                      child: Text(
+                        '등록한 이미지 또는 칸',
+                        style: TextStyle(
+                          color: textHint,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
-                    icon: const Icon(Icons.photo, size: 22),
-                    label: const Text('갤러리'),
+            ),
+            const SizedBox(height: 20),
+
+            // ── 알약 찾기 버튼 ──
+            SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: (_imageBytes != null && !_loading) ? _analyze : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  disabledBackgroundColor: const Color(0xFF898989).withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                  elevation: 0,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.camera),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
-                    icon: const Icon(Icons.camera_alt, size: 22),
-                    label: const Text('카메라'),
-                  ),
-                ),
-              ],
+                child: _loading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Text(
+                        '알약 찾기',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── 갤러리에서 찾아오기 ──
+            _SourceTile(
+              title: '갤러리에서 찾아오기',
+              subtitle: '갤러리 이미지 버튼 클릭',
+              icon: Icons.photo_outlined,
+              onTap: () => _pickImage(ImageSource.gallery),
             ),
             const SizedBox(height: 12),
-            // 분석 버튼 — 이미지가 선택된 경우에만 활성화된다
-            ElevatedButton.icon(
-              onPressed: (_imageBytes != null && !_loading) ? _analyze : null,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                textStyle: const TextStyle(fontSize: 16),
-              ),
-              icon: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.search, size: 22),
-              label: Text(_loading ? '분석 중...' : '약 정보 조회'),
+
+            // ── 사진 직접 촬영하기 ──
+            _SourceTile(
+              title: '사진 직접 촬영하기',
+              subtitle: '카메라 이미지 버튼 클릭',
+              icon: Icons.camera_alt_outlined,
+              onTap: () => _pickImage(ImageSource.camera),
             ),
-            // 오류 발생 시 메시지 표시
+
+            // ── 오류 메시지 ──
             if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
             ],
+          ],
+        ),
+      ),
+
+      // ──────────────────────────── 하단 내비게이션 ────────────────────────
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: textHint,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          currentIndex: 1, // 홈 탭 활성화
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mail_outline),
+              label: '메시지',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              label: '설정',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 갤러리 / 카메라 선택 타일 위젯
+// ─────────────────────────────────────────────────────────────────────────────
+class _SourceTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _SourceTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF898989).withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF343434), // 메인 글씨
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF585858), // 서브 글씨
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAFAFA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF898989).withOpacity(0.3)),
+              ),
+              child: Icon(icon,
+                  color: const Color(0xFF898989), size: 26),
+            ),
           ],
         ),
       ),
