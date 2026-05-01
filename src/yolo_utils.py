@@ -225,7 +225,6 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         lrf=lrf,
         fliplr=fliplr,
         warmup_epochs=warmup_epochs,
-        amp=True,
         project=str(output_dir),
         name="train"
     )
