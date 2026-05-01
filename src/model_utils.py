@@ -366,7 +366,7 @@ def make_yolo_submission(save_dir):
         model_path = save_dir / "weights" / "best.pt"
     test_image_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "test_images"
     yaml_path=PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
-    annotation_dir=PROJECT_ROOT / "data" / "merged_annotations"
+    annotation_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "train_annotations"
     # save_dir 기준으로 고유한 파일명 생성 (예: yolo_11s_train2_submission.csv)
     submission_name = f"{save_dir.parent.name}_{save_dir.name}_submission.csv"
     output_csv_path=PROJECT_ROOT / "submission" / submission_name
