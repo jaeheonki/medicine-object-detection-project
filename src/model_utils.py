@@ -346,10 +346,11 @@ def make_category_map(yaml_path, annotation_dir):
             name = " ".join(str(cat["name"]).replace("\xa0", " ").split())
             name_to_category_id[name] = int(cat["id"])
 
-    # YOLO class id -> 원본 category_id
+    # YOLO class id -> 원본 category_id (추가 데이터 전용 클래스는 train_annotations에 없으므로 제외)
     return {
         class_id: name_to_category_id[name]
         for class_id, name in yolo_id_to_name.items()
+        if name in name_to_category_id
     }
 
 # %% 제출용 예측 함수
