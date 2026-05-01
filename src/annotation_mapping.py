@@ -256,9 +256,12 @@ def fix_annotation_dir(input_dir, output_dir):
 
     for json_path in json_paths:
         try:
+            # 서브디렉터리 구조를 유지해 같은 파일명의 JSON이 덮어씌워지는 것을 방지
+            rel = json_path.relative_to(input_dir)
+            file_output_dir = output_dir / rel.parent
             saved_path = fix_single_annotation_json(
                 json_path=json_path,
-                output_dir=output_dir,
+                output_dir=file_output_dir,
             )
             success.append(str(saved_path))
         except Exception as e:
