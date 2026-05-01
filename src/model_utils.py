@@ -413,6 +413,8 @@ def make_yolo_submission(save_dir):
                 continue
 
             yolo_class_id = int(label.item())
+            if yolo_class_id not in class_id_to_category_id:
+                continue
 
             rows.append({
                 "annotation_id": annotation_id,
