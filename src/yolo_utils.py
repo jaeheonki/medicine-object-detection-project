@@ -132,6 +132,8 @@ def evaluate_yolo(model, val_image_dir, val_label_dir):
     val_label_dir = Path(val_label_dir)
     image_exts = {".jpg", ".jpeg", ".png", ".bmp"}
     image_files = [f for f in val_image_dir.iterdir() if f.suffix.lower() in image_exts]
+    if len(image_files) > 500:
+        image_files = random.sample(image_files, 500)
 
     metric_50 = MeanAveragePrecision(iou_thresholds=[0.50])
     metric_75_95 = MeanAveragePrecision(iou_thresholds=[0.75, 0.80, 0.85, 0.90, 0.95])
@@ -200,6 +202,7 @@ def train(model_name, yaml_path, output_dir, yolo_dataset_dir, epochs=100, batch
         nonlocal best_map_75_95
         tmp_model = YOLO(model_name)
         tmp_model.model = copy.deepcopy(trainer.model)
+        tmp_model.model.eval()
         map_50, map_75_95, f1 = evaluate_yolo(tmp_model, val_image_dir, val_label_dir)
         custom_history["map_50"].append(map_50)
         custom_history["map_75_95"].append(map_75_95)
