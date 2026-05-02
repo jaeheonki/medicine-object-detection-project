@@ -96,7 +96,10 @@ def extract_extra_data(label_out_dir, image_out_dir):
 
                     for f in unzip_dir.rglob('*'):
                         if f.is_file():
-                            shutil.copy2(f, Path(out_dir) / f.name)
+                            rel = f.relative_to(unzip_dir)
+                            dest = Path(out_dir) / rel
+                            dest.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(f, dest)
 
                     print(f'{tar_path.name} 완료')
 
