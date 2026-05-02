@@ -38,7 +38,7 @@ def extract_extra_data(label_out_dir, image_out_dir):
     # repo 파일 목록을 한 번만 가져와 이미지/라벨 처리에 공유
     all_files = list(list_repo_files(REPO_ID, repo_type="dataset"))
 
-    def process_folder(out_dir, file_exts, folder_name):
+    def process_folder(out_dir, file_exts, folder_name, flat=False):
         """tar 파일 목록을 받아 압축 해제 후 대상 경로에 파일을 복사한다."""
         tmp_dir.mkdir(exist_ok=True)
 
@@ -96,9 +96,12 @@ def extract_extra_data(label_out_dir, image_out_dir):
 
                     for f in unzip_dir.rglob('*'):
                         if f.is_file():
-                            rel = f.relative_to(unzip_dir)
-                            dest = Path(out_dir) / rel
-                            dest.parent.mkdir(parents=True, exist_ok=True)
+                            if flat:
+                                dest = Path(out_dir) / f.name
+                            else:
+                                rel = f.relative_to(unzip_dir)
+                                dest = Path(out_dir) / rel
+                                dest.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copy2(f, dest)
 
                     print(f'{tar_path.name} 완료')
@@ -111,8 +114,8 @@ def extract_extra_data(label_out_dir, image_out_dir):
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    process_folder(image_out_dir, {'.jpg', '.jpeg', '.png', '.bmp'}, "이미지")
-    process_folder(label_out_dir, {'.json'}, "라벨")
+    process_folder(image_out_dir, {'.jpg', '.jpeg', '.png', '.bmp'}, "이미지", flat=True)
+    process_folder(label_out_dir, {'.json'}, "라벨", flat=False)
 
     print('추가 데이터 처리 완료!')
 
