@@ -346,11 +346,10 @@ def make_category_map(yaml_path, annotation_dir):
             name = " ".join(str(cat["name"]).replace("\xa0", " ").split())
             name_to_category_id[name] = int(cat["id"])
 
-    # YOLO class id -> 원본 category_id (추가 데이터 전용 클래스는 train_annotations에 없으므로 제외)
+    # YOLO class id -> 원본 category_id
     return {
         class_id: name_to_category_id[name]
         for class_id, name in yolo_id_to_name.items()
-        if name in name_to_category_id
     }
 
 # %% 제출용 예측 함수
@@ -367,7 +366,7 @@ def make_yolo_submission(save_dir):
         model_path = save_dir / "weights" / "best.pt"
     test_image_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "test_images"
     yaml_path=PROJECT_ROOT / "data" / "yolo_dataset" / "dataset.yaml"
-    annotation_dir=PROJECT_ROOT / "data" / "sprint_ai_project1_data" / "train_annotations"
+    annotation_dir=PROJECT_ROOT / "data" / "merged_annotations"
     # save_dir 기준으로 고유한 파일명 생성 (예: yolo_11s_train2_submission.csv)
     submission_name = f"{save_dir.parent.name}_{save_dir.name}_submission.csv"
     output_csv_path=PROJECT_ROOT / "submission" / submission_name
@@ -413,8 +412,6 @@ def make_yolo_submission(save_dir):
                 continue
 
             yolo_class_id = int(label.item())
-            if yolo_class_id not in class_id_to_category_id:
-                continue
 
             rows.append({
                 "annotation_id": annotation_id,
