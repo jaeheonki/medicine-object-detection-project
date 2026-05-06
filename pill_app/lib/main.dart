@@ -3,6 +3,7 @@ import 'screens/home_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/pill_list_screen.dart';
 import 'screens/alarm_screen.dart';
+import 'screens/settings_screen.dart';
 
 // 앱의 진입점 — Flutter는 main() 함수에서 시작한다
 void main() {
@@ -91,7 +92,7 @@ class _MainPageState extends State<MainPage> {
         );
 
       case 3:
-        return const Center(child: Text('설정 화면 준비 중'));
+        return const SettingsScreen();
 
       default:
         return const SizedBox.shrink();

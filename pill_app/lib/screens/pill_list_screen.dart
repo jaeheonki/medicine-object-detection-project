@@ -131,8 +131,9 @@ class _PillCardState extends State<_PillCard> {
     );
 
     try {
-      final encoded = Uri.encodeComponent(widget.name);
-      final response = await http.get(Uri.parse('$_baseUrl/pill-info/$encoded'));
+      final uri = Uri.parse('$_baseUrl/pill-info')
+          .replace(queryParameters: {'name': widget.name});
+      final response = await http.get(uri);
       if (!context.mounted) return;
       Navigator.pop(context); // 로딩 다이얼로그 닫기
 
