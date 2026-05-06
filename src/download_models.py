@@ -2,7 +2,7 @@
 구글 드라이브에서 YOLO 모델(.pt)과 데이터셋 설정(.yaml)을 다운로드한다.
 
 사용법:
-    python scripts/download_models.py
+    python src/download_models.py
 
 파일 ID는 .env의 MODEL_GDRIVE_ID / YAML_GDRIVE_ID에서 읽는다.
 다운로드 위치는 프로젝트 루트의 checkpoints/ 폴더다.
