@@ -109,7 +109,11 @@ class _SplashScreenState extends State<SplashScreen>
             top: size.height * 0.25,
             left: 0,
             right: 0,
-            child: FadeTransition(
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.noScaling,
+              ),
+              child: FadeTransition(
               opacity: _fadeAnim,
               child: SlideTransition(
                 position: _slideAnim,
@@ -142,6 +146,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ],
                 ),
               ),
+            ),
             ),
           ),
         ],

@@ -6,6 +6,7 @@ import io
 import argparse
 import xml.etree.ElementTree as ET
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from ultralytics import YOLO
 from PIL import Image
@@ -202,20 +203,28 @@ def detect_pills(image_path, model_path, yaml_path, score_threshold=0.5):
     # bbox 영역을 잘라 base64로 인코딩 — Flutter에서 이미지로 바로 표시
     img = Image.open(image_path)
 
-    output = []
+    items = []
     for name, (conf, bbox) in detected.items():
         x1, y1, x2, y2 = [int(v) for v in bbox]
         crop = img.crop((x1, y1, x2, y2))
         buf = io.BytesIO()
         crop.save(buf, format="JPEG")
         crop_b64 = base64.b64encode(buf.getvalue()).decode()
+        items.append((name, round(conf * 100, 1), crop_b64))
 
-        output.append({
+    # 약품마다 API 조회를 병렬로 실행 — 순차 대비 탐지 약 수만큼 단축
+    def fetch(item):
+        name, conf, crop_b64 = item
+        return {
             "name": name,
-            "confidence": round(conf * 100, 1),
+            "confidence": conf,
             "crop_image": crop_b64,
             "info": get_pill_info(name),
-        })
+        }
+
+    with ThreadPoolExecutor() as executor:
+        output = list(executor.map(fetch, items))
+
     return output
 
 
