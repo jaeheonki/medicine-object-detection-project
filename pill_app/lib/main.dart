@@ -5,6 +5,7 @@ import 'screens/pill_list_screen.dart';
 import 'screens/alarm_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/alarm_service.dart';
+import 'splash.dart';
 
 // 앱의 진입점 — Flutter는 main() 함수에서 시작한다
 void main() async {
@@ -25,7 +26,7 @@ class PillApp extends StatelessWidget {
       title: '약 정보 조회',
       debugShowCheckedModeBanner: false, // 디버그 배너 숨김
       theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-      home: const MainPage(),
+      home: const SplashScreen(),
     );
   }
 }
