@@ -246,6 +246,17 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _pickImage(ImageSource.camera),
             ),
 
+            const SizedBox(height: 20),
+            const Text(
+              '약들의 사진을 앞면으로 찍어서 업로드해주세요',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF898989),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+
             // ── 오류 메시지 ──
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
