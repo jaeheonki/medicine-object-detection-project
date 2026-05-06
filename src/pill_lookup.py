@@ -96,6 +96,26 @@ def _query_eyak_api(name):
     return response.json().get("body", {}).get("items", [])
 
 
+def _build_search_candidates(pill_name):
+    """
+    약품명에서 다양한 검색 후보를 생성한다.
+    1. 원본 (용량 한글 변환)
+    2. 괄호 제거 후 용량 변환
+    3. 띄어쓰기 제거
+    4. ~정/캡슐/환/액/시럽 뒤 문자 제거 (제형 뒤 용량/규격 제거)
+    """
+    base = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
+    stripped = DOSAGE_PATTERN.sub(_dosage_to_korean, re.sub(r"\s*\([^)]*\)", "", pill_name).strip())
+    no_space = stripped.replace(" ", "")
+    form_match = re.match(r"^(.+?(?:정|캡슐|환|액|시럽|크림|연고|겔|패취|주))", stripped)
+    form_only = form_match.group(1) if form_match else None
+
+    candidates = [base, stripped, no_space]
+    if form_only and form_only not in candidates:
+        candidates.append(form_only)
+    return candidates
+
+
 def get_pill_info(pill_name):
     """
     약품명으로 약 정보를 조회한다.
@@ -104,16 +124,19 @@ def get_pill_info(pill_name):
     2차: e약은요 API로 "정보 없음"인 필드만 보완
 
     YOLO 클래스명의 영문 용량('10mg')은 한글('10밀리그램')로 변환 후 검색한다.
+    검색 순서: 원본 → 괄호 제거 → 띄어쓰기 제거 → 제형 뒤 문자 제거
     """
-    # 1차 검색명: 괄호 포함 원본에서 용량만 한글 변환
-    search_name = DOSAGE_PATTERN.sub(_dosage_to_korean, pill_name)
-    # 2차 검색명: 괄호 제거 후 용량 변환 — 1차 검색 실패 시 폴백용
-    search_name_stripped = DOSAGE_PATTERN.sub(_dosage_to_korean, re.sub(r"\s*\([^)]*\)", "", pill_name).strip())
+    candidates = _build_search_candidates(pill_name)
+    search_name_stripped = candidates[1]
 
     info = {"약품명": None, "효능": "정보 없음", "복용법": "정보 없음", "주의사항": "정보 없음", "이미지": None}
 
-    # 1차: 식약처 제품허가정보 API (괄호 포함 원본으로 먼저 시도, 없으면 괄호 제거 후 재시도)
-    items = _query_api(search_name) or _query_api(search_name_stripped)
+    # 1차: 식약처 제품허가정보 API (후보 순서대로 시도)
+    items = None
+    for candidate in candidates:
+        items = _query_api(candidate)
+        if items:
+            break
     if items:
         item = items[0]
         info["약품명"] = item.get("ITEM_NAME")
@@ -124,7 +147,7 @@ def get_pill_info(pill_name):
     # 2차: "정보 없음"인 필드가 있거나 이미지가 없으면 e약은요 API로 보완
     missing = [k for k in ["효능", "복용법", "주의사항"] if info[k] == "정보 없음"]
     if EYAK_API_KEY and (missing or info["이미지"] is None):
-        for query in [search_name, search_name_stripped, pill_name]:
+        for query in candidates:
             eyak_items = _query_eyak_api(query)
             if eyak_items:
                 eyak_item = eyak_items[0]
