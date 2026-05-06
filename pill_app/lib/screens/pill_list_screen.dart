@@ -17,11 +17,24 @@ class _PillListScreenState extends State<PillListScreen> {
   List<String> _classes = [];
   bool _loading = true;
   String? _error;
+  bool _isSearching = false;
+  String _query = '';
+  final _searchController = TextEditingController();
+
+  List<String> get _filtered => _query.isEmpty
+      ? _classes
+      : _classes.where((name) => name.toLowerCase().contains(_query.toLowerCase())).toList();
 
   @override
   void initState() {
     super.initState();
     _loadClasses();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _normalizeName(String value) {
@@ -78,32 +91,47 @@ class _PillListScreenState extends State<PillListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7FF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F7FF),
+        backgroundColor: const Color(0xFF3629B7),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          '알약 찾기 결과',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: '약품명 검색...',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) => setState(() => _query = value),
+              )
+            : const Text(
+                '알약 찾기 결과',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87, size: 30),
-            onPressed: () {},
+            icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.white, size: 30),
+            onPressed: () => setState(() {
+              _isSearching = !_isSearching;
+              if (!_isSearching) {
+                _query = '';
+                _searchController.clear();
+              }
+            }),
           ),
         ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-        itemCount: _classes.length,
+        itemCount: _filtered.length,
         itemBuilder: (context, index) {
-          final name = _classes[index];
+          final name = _filtered[index];
           final imagePath = pillImagePathByName[_normalizeName(name)];
 
           return _PillCard(
@@ -111,14 +139,6 @@ class _PillListScreenState extends State<PillListScreen> {
             imagePath: imagePath,
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3626B8),
-        shape: const CircleBorder(),
-        onPressed: () {
-          // TODO: 카메라 / 이미지 업로드 기능 연결
-        },
-        child: const Icon(Icons.add, color: Colors.white, size: 36),
       ),
     );
   }
@@ -247,7 +267,7 @@ class _PillCardState extends State<_PillCard> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  '알약에 관한 내용 알약내용입니다. 복용법과 주의사항을 확인할 수 있습니다.',
+                  '알약에 관한 내용입니다. 복용법과 주의사항을 확인할 수 있습니다.',
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -264,7 +284,7 @@ class _PillCardState extends State<_PillCard> {
                     '...더보기',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF8A8A8A),
+                      color: Color(0xFF3626B8),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

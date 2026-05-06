@@ -147,14 +147,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Container(
                 width: double.infinity,
-                color: _primary,
-                padding: EdgeInsets.fromLTRB(20, statusBarH + 16, 20, avatarRadius + 24),
+                decoration: const BoxDecoration(
+                  color: _primary,
+                ),
+                padding: EdgeInsets.fromLTRB(20, statusBarH + 16, 20, avatarRadius + 40),
                 child: const Text(
                   '환경설정',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

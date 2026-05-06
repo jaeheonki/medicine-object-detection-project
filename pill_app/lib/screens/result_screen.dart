@@ -143,25 +143,34 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF3629B7),
         title: _isSearching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   hintText: '약품명 검색...',
+                  hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
                 ),
                 onChanged: (value) => setState(() => _query = value),
               )
-            : const Text('알약 찾기 결과', style: TextStyle(fontWeight: FontWeight.bold)),
+            : const Text(
+                '알약 찾기 결과',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: widget.onBack,
         ),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.white),
             onPressed: () => setState(() {
               _isSearching = !_isSearching;
               if (!_isSearching) {

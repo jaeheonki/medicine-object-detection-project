@@ -15,11 +15,33 @@ class AlarmScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const _AlarmTopBar(),
-
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF3629B7),
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: const [
+            Text(
+              '알림',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Spacer(),
+            Text(
+              '삭제하려면 왼쪽으로 밀어주세요',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white70,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
             Expanded(
               child: schedules.isEmpty
                   ? const Center(
@@ -65,66 +87,6 @@ class AlarmScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _AlarmTopBar extends StatelessWidget {
-  const _AlarmTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 14,
-            top: 17,
-            child: GestureDetector(
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 17,
-                color: Colors.black,
-              ),
-            ),
-          ),
-
-          const Positioned(
-            left: 40,
-            top: 15,
-            child: Text(
-              '알림',
-              style: TextStyle(
-                fontSize: 18,
-                height: 1.0,
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          const Positioned(
-            right: 24,
-            top: 22,
-            child: Text(
-              '삭제하려면 왼쪽으로 밀어주세요',
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.0,
-                color: Color(0x66888888),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
