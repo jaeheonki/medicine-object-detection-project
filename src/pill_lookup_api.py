@@ -135,7 +135,7 @@ def get_classes():
     return {"classes": load_class_names(YAML_PATH)}
 
 
-@app.get("/pill-info/{name}")
+@app.get("/pill-info")
 def pill_info(name: str):
     """약품명으로 상세 정보(효능/복용법/주의사항/이미지)를 반환한다."""
     info = get_pill_info(name)

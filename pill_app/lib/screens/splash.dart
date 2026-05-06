@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_screen.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -54,8 +55,27 @@ class _SplashScreenState extends State<SplashScreen>
 
     _waveController.forward();
     _fadeController.forward();
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _slideController.forward();
+    });
+
+    // ✅ 2.5초 후 홈화면으로 전환
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => HomeScreen(
+              onResults: (results) {},
+            ),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
+      }
     });
   }
 
@@ -93,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
             },
           ),
 
-          // 로고 + 텍스트 — 0.25로 아래로 조정
+          // 로고 + 텍스트
           Positioned(
             top: size.height * 0.29,
             left: 0,
@@ -106,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
 
-                    // 45도 기울어진 알약 로고 (크기 80 → 58)
+                    // 45도 기울어진 알약 로고
                     Transform.rotate(
                       angle: -0.785,
                       child: const _PillIcon(size: 58),
