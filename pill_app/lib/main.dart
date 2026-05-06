@@ -4,9 +4,13 @@ import 'screens/result_screen.dart';
 import 'screens/pill_list_screen.dart';
 import 'screens/alarm_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/alarm_service.dart';
 
 // 앱의 진입점 — Flutter는 main() 함수에서 시작한다
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
+
   runApp(const PillApp());
 }
 
@@ -38,8 +42,8 @@ class MainPage extends StatefulWidget {
 
 // 탭 인덱스: 0 리스트 / 1 홈 / 2 복약알림 / 3 설정
 const Color _primaryColor = Color(0xFF3629B7);
-const Color _cardColor    = Color(0xFFFFFFFF);
-const Color _textHint     = Color(0xFF898989);
+const Color _cardColor = Color(0xFFFFFFFF);
+const Color _textHint = Color(0xFF898989);
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 1; // 홈이 기본 탭
@@ -52,12 +56,128 @@ class _MainPageState extends State<MainPage> {
   // ResultScreen에서 알림을 추가하면 여기에 쌓이고, AlarmScreen에서 표시한다
   final List<Map<String, String>> _schedules = [];
 
+  // 복약 알림 추가 함수
+  // 화면에 일정을 추가하는 것뿐 아니라 실제 휴대폰 알림도 예약한다
+  void _addSchedule(Map<String, String> schedule) async {
+    final alarmId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    final alarmDateTime = _parseScheduleDateTime(schedule);
+
+    final savedSchedule = Map<String, String>.from(schedule);
+    savedSchedule['id'] = alarmId.toString();
+    savedSchedule['dateTime'] = _formatDateTime(alarmDateTime);
+
+    setState(() {
+      _schedules.add(savedSchedule);
+    });
+
+    await NotificationService.scheduleMedicineAlarm(
+      id: alarmId,
+      medicineName: savedSchedule['medicineName'] ?? '복약',
+      dateTime: alarmDateTime,
+    );
+  }
+
   // 복약 알림 삭제 함수
-  // AlarmScreen에서 삭제 버튼을 누르면 index를 받아 해당 일정을 제거한다
-  void _cancelSchedule(int index) {
+  // AlarmScreen에서 삭제하면 화면 목록에서 제거하고 실제 예약 알림도 취소한다
+  void _cancelSchedule(int index) async {
+    if (index < 0 || index >= _schedules.length) return;
+
+    final schedule = _schedules[index];
+    final alarmIdText = schedule['id'];
+
+    if (alarmIdText != null) {
+      final alarmId = int.tryParse(alarmIdText);
+
+      if (alarmId != null) {
+        await NotificationService.cancelAlarm(alarmId);
+      }
+    }
+
+    if (!mounted) return;
+
     setState(() {
       _schedules.removeAt(index);
     });
+  }
+
+  // schedule에 들어있는 dateTime 또는 time 값을 DateTime으로 변환한다
+  DateTime _parseScheduleDateTime(Map<String, String> schedule) {
+    final dateTimeText = schedule['dateTime']?.trim();
+
+    // 예: 2026/04/08 9:50 또는 2026-04-08 09:50
+    if (dateTimeText != null && dateTimeText.isNotEmpty) {
+      final parsedDateTime = _tryParseDateTimeText(dateTimeText);
+
+      if (parsedDateTime != null) {
+        return parsedDateTime;
+      }
+    }
+
+    // dateTime이 없거나 파싱 실패하면 time만 사용
+    // 예: 09:00
+    final timeText = schedule['time']?.trim() ?? '09:00';
+    final timeParts = timeText.split(':');
+
+    final hour = int.tryParse(timeParts[0]) ?? 9;
+    final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+    final now = DateTime.now();
+
+    var alarmDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+
+    // 이미 지난 시간이면 다음 날 알림으로 예약
+    if (alarmDateTime.isBefore(now)) {
+      alarmDateTime = alarmDateTime.add(const Duration(days: 1));
+    }
+
+    return alarmDateTime;
+  }
+
+  // 문자열 날짜를 DateTime으로 변환한다
+  DateTime? _tryParseDateTimeText(String text) {
+    final normalized = text.replaceAll('/', '-');
+
+    final regex = RegExp(
+      r'^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{1,2})',
+    );
+
+    final match = regex.firstMatch(normalized);
+
+    if (match == null) return null;
+
+    final year = int.tryParse(match.group(1)!);
+    final month = int.tryParse(match.group(2)!);
+    final day = int.tryParse(match.group(3)!);
+    final hour = int.tryParse(match.group(4)!);
+    final minute = int.tryParse(match.group(5)!);
+
+    if (year == null ||
+        month == null ||
+        day == null ||
+        hour == null ||
+        minute == null) {
+      return null;
+    }
+
+    return DateTime(year, month, day, hour, minute);
+  }
+
+  // AlarmScreen에 보여줄 날짜 문자열 생성
+  String _formatDateTime(DateTime dateTime) {
+    final year = dateTime.year.toString();
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+
+    return '$year/$month/$day $hour:$minute';
   }
 
   // 현재 탭 인덱스에 따라 표시할 화면 위젯을 반환한다
@@ -81,8 +201,8 @@ class _MainPageState extends State<MainPage> {
           results: _results!,
           // 뒤로가기 버튼 → _results를 null로 초기화해 홈 화면으로 돌아간다
           onBack: () => setState(() => _results = null),
-          // 알림 추가 → _schedules 리스트에 새 일정을 추가한다
-          onAddSchedule: (schedule) => setState(() => _schedules.add(schedule)),
+          // 알림 추가 → 화면 목록에 저장하고 실제 알림도 예약한다
+          onAddSchedule: _addSchedule,
         );
 
       case 2:
