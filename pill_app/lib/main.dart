@@ -6,6 +6,7 @@ import 'screens/pill_list_screen.dart';
 import 'screens/alarm_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/alarm_service.dart';
+import 'screens/splash.dart';
 
 // 앱의 진입점 — Flutter는 main() 함수에서 시작한다
 void main() async {
@@ -48,7 +49,7 @@ class _PillAppState extends State<PillApp> {
         ),
         child: child!,
       ),
-      home: MainPage(
+      home: SplashScreen(
         onFontSizeChanged: (size) => setState(() => _fontSize = size),
       ),
     );

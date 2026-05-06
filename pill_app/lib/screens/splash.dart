@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-
-void main() {
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: SplashScreen(),
-  ));
-}
+import '../main.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final void Function(double)? onFontSizeChanged;
+  const SplashScreen({super.key, this.onFontSizeChanged});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -17,7 +11,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-
   static const Color primaryColor = Color(0xFF3629B7);
 
   late AnimationController _fadeController;
@@ -60,15 +53,15 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _slideController.forward();
     });
 
-    // ✅ 2.5초 후 홈화면으로 전환
+    // 2.5초 후 MainPage로 전환
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => HomeScreen(
-              onResults: (results) {},
-            ),
+            pageBuilder: (_, __, ___) => MainPage(
+                  onFontSizeChanged: widget.onFontSizeChanged ?? (_) {},
+                ),
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(opacity: animation, child: child);
             },
@@ -95,11 +88,11 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: primaryColor,
       body: Stack(
         children: [
-          // 하단 흰색 물결
           AnimatedBuilder(
             animation: _waveAnim,
             builder: (_, __) {
-              final waveTop = size.height * (0.45 + (1 - _waveAnim.value) * 0.55);
+              final waveTop =
+                  size.height * (0.45 + (1 - _waveAnim.value) * 0.55);
               return Positioned(
                 top: waveTop,
                 left: 0,
@@ -112,10 +105,8 @@ class _SplashScreenState extends State<SplashScreen>
               );
             },
           ),
-
-          // 로고 + 텍스트
           Positioned(
-            top: size.height * 0.29,
+            top: size.height * 0.25,
             left: 0,
             right: 0,
             child: FadeTransition(
@@ -125,15 +116,11 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
-                    // 45도 기울어진 알약 로고
                     Transform.rotate(
                       angle: -0.785,
                       child: const _PillIcon(size: 58),
                     ),
                     const SizedBox(height: 16),
-
-                    // '이게' — 흰색 볼드
                     const Text(
                       '이게',
                       style: TextStyle(
@@ -143,8 +130,6 @@ class _SplashScreenState extends State<SplashScreen>
                         letterSpacing: -1,
                       ),
                     ),
-
-                    // '머약' — 검정 볼드
                     const Text(
                       '머약',
                       style: TextStyle(
@@ -165,7 +150,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// 알약 아이콘
 class _PillIcon extends StatelessWidget {
   final double size;
   const _PillIcon({this.size = 48});
@@ -212,7 +196,6 @@ class _PillPainter extends CustomPainter {
   bool shouldRepaint(_PillPainter old) => false;
 }
 
-// 물결 배경
 class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -220,8 +203,10 @@ class _WavePainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, size.height * 0.2);
     path.quadraticBezierTo(
-      size.width * 0.5, -size.height * 0.15,
-      size.width, size.height * 0.2,
+      size.width * 0.5,
+      -size.height * 0.15,
+      size.width,
+      size.height * 0.2,
     );
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
