@@ -58,15 +58,31 @@ def save_images(repo_id, folder_path, output_dir, limit = None):
     output_dir.mkdir(parents=True, exist_ok = True)
 
     saved_paths = []
+    import json
+    items = []
 
     for file in selected_files:
         image = download_image(repo_id, file)
+        image = image.convert("RGB")
 
-        file_name = Path(file).name
+        file_name = f"pill_{len(saved_paths):04d}.png"
         save_path = output_dir / file_name
 
         image.save(save_path)
         saved_paths.append(save_path)
+
+        pill_name = Path(file).stem
+
+        items.append({
+            "name": pill_name,
+            "image": f"assets/pill_images/{file_name}",
+        })
+
+
+    json_path = output_dir / "pill_images.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=2)
+
 
     return  saved_paths
 

@@ -1,12 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import '../pill_image_map.dart';
 import 'package:http/http.dart' as http;
 
 const String _baseUrl = 'http://localhost:9000';
 
-// 인식 가능한 약 목록 화면
-// 서버의 /classes 엔드포인트에서 약품명 리스트를 가져와 카드 형태로 표시한다
-// 각 카드에서 '상세정보' 버튼을 누르면 /pill-info/{name}으로 상세 정보를 로드한다
 class PillListScreen extends StatefulWidget {
   const PillListScreen({super.key});
 
@@ -25,13 +24,21 @@ class _PillListScreenState extends State<PillListScreen> {
     _loadClasses();
   }
 
+  String _normalizeName(String value) {
+    return value
+        .replaceAll(RegExp(r'[^0-9a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣᄀ-ᇿ]'), '')
+        .toLowerCase();
+  }
+
   Future<void> _loadClasses() async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl/classes'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final classes = List<String>.from(data['classes']);
+
         setState(() {
-          _classes = List<String>.from(data['classes']);
+          _classes = classes;
           _loading = false;
         });
       } else {
@@ -59,7 +66,12 @@ class _PillListScreenState extends State<PillListScreen> {
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('인식 가능한 약 목록')),
-        body: Center(child: Text(_error!, style: const TextStyle(color: Colors.red))),
+        body: Center(
+          child: Text(
+            _error!,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
       );
     }
 
@@ -90,7 +102,15 @@ class _PillListScreenState extends State<PillListScreen> {
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
         itemCount: _classes.length,
-        itemBuilder: (context, index) => _PillCard(name: _classes[index]),
+        itemBuilder: (context, index) {
+          final name = _classes[index];
+          final imagePath = pillImagePathByName[_normalizeName(name)];
+
+          return _PillCard(
+            name: name,
+            imagePath: imagePath,
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF3626B8),
@@ -101,29 +121,31 @@ class _PillListScreenState extends State<PillListScreen> {
         child: const Icon(Icons.add, color: Colors.white, size: 36),
       ),
     );
-    }
   }
-// 약품 카드 — 상세정보 버튼을 즉시 표시하고, 클릭 시에만 API를 호출한다
-// 리스트 로드 시 56개 동시 API 호출을 방지하기 위해 on-demand 방식을 사용한다
+}
+
 class _PillCard extends StatefulWidget {
   final String name;
-  const _PillCard({required this.name});
+  final String? imagePath;
+
+  const _PillCard({
+    required this.name,
+    required this.imagePath,
+  });
 
   @override
   State<_PillCard> createState() => _PillCardState();
 }
 
 class _PillCardState extends State<_PillCard> {
-  Map<String, dynamic>? _cachedInfo; // 한 번 로드한 정보를 캐시해 재클릭 시 재호출 방지
+  Map<String, dynamic>? _cachedInfo;
 
   Future<void> _showDetail(BuildContext context) async {
-    // 이미 캐시된 정보가 있으면 API 재호출 없이 바로 표시
     if (_cachedInfo != null) {
       _openDialog(context, _cachedInfo!);
       return;
     }
 
-    // 로딩 다이얼로그 표시
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -135,7 +157,7 @@ class _PillCardState extends State<_PillCard> {
           .replace(queryParameters: {'name': widget.name});
       final response = await http.get(uri);
       if (!context.mounted) return;
-      Navigator.pop(context); // 로딩 다이얼로그 닫기
+      Navigator.pop(context);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -191,93 +213,101 @@ class _PillCardState extends State<_PillCard> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 18),
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 16,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _placeholder(),
-        const SizedBox(width: 18),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.name,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _pillImage(),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '알약에 관한 내용 알약내용입니다. 복용법과 주의사항을 확인할 수 있습니다.',
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: Color(0xFF8A8A8A),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () => _showDetail(context),
-                child: const Text(
-                  '...더보기',
+                const SizedBox(height: 10),
+                const Text(
+                  '알약에 관한 내용 알약내용입니다. 복용법과 주의사항을 확인할 수 있습니다.',
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13,
+                    height: 1.45,
                     color: Color(0xFF8A8A8A),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () => _showDetail(context),
+                  child: const Text(
+                    '...더보기',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF8A8A8A),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pillImage() {
+    final imagePath = widget.imagePath;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 120,
+        height: 120,
+        color: const Color(0xFFE9E9E9),
+        child: imagePath == null
+            ? const Center(
+                child: Text(
+                  '알약 사진',
+                  style: TextStyle(
+                    color: Color(0xFF999999),
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+              )
+            : Image.asset(
+                imagePath,
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
               ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _placeholder() {
-  return Container(
-    width: 120,
-    height: 120,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: const Color(0xFFE9E9E9),
-      borderRadius: BorderRadius.circular(14),
-    ),
-    child: const Text(
-      '알약 사진',
-      style: TextStyle(
-        color: Color(0xFF999999),
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
       ),
-    ),
-  );
+    );
+  }
 }
 
-} // end of _PillCardState
-
-// 상세정보 다이얼로그 내 라벨-값 행 위젯
 class _DetailRow extends StatelessWidget {
   final String label;
   final String? value;
@@ -291,7 +321,13 @@ class _DetailRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.teal,
+            ),
+          ),
           const SizedBox(height: 4),
           _ExpandableText(value ?? '정보 없음'),
         ],
@@ -300,9 +336,9 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// 200자 초과 텍스트를 접어두고 '...더보기' / '접기' 버튼으로 토글하는 위젯
 class _ExpandableText extends StatefulWidget {
   final String text;
+
   const _ExpandableText(this.text);
 
   @override
@@ -329,7 +365,10 @@ class _ExpandableTextState extends State<_ExpandableText> {
             onTap: () => setState(() => _expanded = !_expanded),
             child: Text(
               _expanded ? '접기' : '...더보기',
-              style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.teal,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],
