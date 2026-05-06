@@ -78,7 +78,7 @@ if __name__ == "__main__":
     saved_paths = save_images(
         repo_id,
         folder_path,
-        output_dir = "data/pill_images", #제가 임의로 설정해둔 경로입니다. 이미지가 저장될 실제 경로로 수정 필요
+        output_dir = "pill_app/assets/pill_images", #제가 임의로 설정해둔 경로입니다. 이미지가 저장될 실제 경로로 수정 필요
         limit = None
     )
 
