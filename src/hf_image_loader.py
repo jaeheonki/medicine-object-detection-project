@@ -46,7 +46,7 @@ image.show()
 '''
 
 # 여러 장을 data/pill_images에 저장하기 (경로 임의 설정)
-def save_images(repo_id, folder_path, output_dir, limit=10):
+def save_images(repo_id, folder_path, output_dir, limit = None):
     files = list_image_files(repo_id, folder_path)
 
     if limit is None:
