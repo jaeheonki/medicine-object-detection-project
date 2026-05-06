@@ -7,7 +7,8 @@ import 'package:path_provider/path_provider.dart';
 const Color _primary = Color(0xFF3629B7);
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final void Function(double)? onFontSizeChanged;
+  const SettingsScreen({super.key, this.onFontSizeChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -126,6 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('font_size', result);
       setState(() => _fontSize = result);
+      widget.onFontSizeChanged?.call(result);
     }
   }
 

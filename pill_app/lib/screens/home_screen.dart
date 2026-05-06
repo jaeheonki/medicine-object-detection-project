@@ -247,14 +247,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 20),
-            const Text(
-              '약들의 사진을 앞면으로 찍어서 업로드해주세요',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF898989),
-                fontWeight: FontWeight.w500,
+            const Text.rich(
+              TextSpan(
+                style: TextStyle(fontSize: 15, color: Color(0xFF343434)),
+                children: [
+                  TextSpan(text: '약들의 사진을 '),
+                  TextSpan(
+                    text: '앞면으로',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: ' 찍어서 업로드해주세요'),
+                ],
               ),
+              textAlign: TextAlign.center,
             ),
 
             // ── 오류 메시지 ──

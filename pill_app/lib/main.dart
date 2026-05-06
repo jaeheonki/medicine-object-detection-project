@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/pill_list_screen.dart';
@@ -15,17 +16,41 @@ void main() async {
 }
 
 // 앱 전체를 감싸는 루트 위젯
-// MaterialApp을 통해 테마와 기본 설정을 전역으로 적용한다
-class PillApp extends StatelessWidget {
+// 폰트 크기 상태를 보관하고 MaterialApp의 textScaler에 연결한다
+class PillApp extends StatefulWidget {
   const PillApp({super.key});
+
+  @override
+  State<PillApp> createState() => _PillAppState();
+}
+
+class _PillAppState extends State<PillApp> {
+  double _fontSize = 14.0;
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then(
+      (p) => setState(() => _fontSize = p.getDouble('font_size') ?? 14.0),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '약 정보 조회',
-      debugShowCheckedModeBanner: false, // 디버그 배너 숨김
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
-      home: const MainPage(),
+      // 앱 전체 텍스트 크기를 기본값(14) 대비 비율로 조정
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(_fontSize / 14.0),
+        ),
+        child: child!,
+      ),
+      home: MainPage(
+        onFontSizeChanged: (size) => setState(() => _fontSize = size),
+      ),
     );
   }
 }
@@ -34,7 +59,8 @@ class PillApp extends StatelessWidget {
 // 각 탭에서 공유해야 하는 상태(_results, _schedules)를 여기서 보관한다
 // 자식 위젯(HomeScreen, ResultScreen 등)은 콜백을 통해 이 상태를 변경한다
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final void Function(double) onFontSizeChanged;
+  const MainPage({super.key, required this.onFontSizeChanged});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -212,7 +238,9 @@ class _MainPageState extends State<MainPage> {
         );
 
       case 3:
-        return const SettingsScreen();
+        return SettingsScreen(
+          onFontSizeChanged: widget.onFontSizeChanged,
+        );
 
       default:
         return const SizedBox.shrink();
