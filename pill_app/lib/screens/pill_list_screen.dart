@@ -26,7 +26,6 @@ class _PillListScreenState extends State<PillListScreen> {
 
   String _normalizeName(String value) {
     return value
-        .replaceAll(RegExp(r'\([^)]*\)'), '')
         .replaceAll(RegExp(r'[^0-9a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣᄀ-ᇿ]'), '')
         .toLowerCase();
   }
