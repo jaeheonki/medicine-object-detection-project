@@ -26,13 +26,12 @@
 
 ## 기술 스택
 
-| 분류 | 기술 |
-|------|------|
-| 모바일 앱 | Flutter |
-| 서버 | Python, FastAPI, Uvicorn |
-| AI 모델 | YOLOv11s |
-| 약 정보 API | 식약처 제품허가정보 API, e약은요 API |
-| 의존성 관리 | uv |
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Uvicorn](https://img.shields.io/badge/Uvicorn-4751B5?style=for-the-badge&logo=uvicorn&logoColor=white)
+![YOLO](https://img.shields.io/badge/YOLOv11s-00FFFF?style=for-the-badge&logo=yolo&logoColor=black)
+![uv](https://img.shields.io/badge/uv-DE5FE9?style=for-the-badge&logo=uv&logoColor=white)
 
 ---
 
@@ -111,11 +110,3 @@ Medicine_Project/
 
 ---
 
-## 팀원
-
-| 이름 | 역할 |
-|------|------|
-| | |
-| | |
-| | |
-| | |
