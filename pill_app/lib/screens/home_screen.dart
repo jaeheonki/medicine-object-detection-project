@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // FastAPI 서버 주소 — 서버와 Flutter 앱이 같은 머신에서 실행될 때 사용
-const String apiUrl = 'http://localhost:9000/predict';
+const String apiUrl = 'http://192.168.75.108:9000/predict';
 
 // 홈 화면 — 이미지 선택 및 약 분석 요청을 담당한다
 // 분석 결과는 onResults 콜백을 통해 MainPage로 전달되고,
