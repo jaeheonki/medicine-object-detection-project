@@ -1,0 +1,474 @@
+[
+  {
+    "name": "가바토파정 100mg",
+    "image": "assets/pill_images/pill_0000.png"
+  },
+  {
+    "name": "게보린정 300mg_PTP",
+    "image": "assets/pill_images/pill_0001.png"
+  },
+  {
+    "name": "글리아타민연질캡슐 ",
+    "image": "assets/pill_images/pill_0002.png"
+  },
+  {
+    "name": "글리틴정_콜린알포세레이트",
+    "image": "assets/pill_images/pill_0003.png"
+  },
+  {
+    "name": "기넥신에프정(은행엽엑스)(수출용)",
+    "image": "assets/pill_images/pill_0004.png"
+  },
+  {
+    "name": "낙소졸정 500_20mg ",
+    "image": "assets/pill_images/pill_0005.png"
+  },
+  {
+    "name": "넥시움정 40mg",
+    "image": "assets/pill_images/pill_0006.png"
+  },
+  {
+    "name": "노바스크정 5mg",
+    "image": "assets/pill_images/pill_0007.png"
+  },
+  {
+    "name": "놀텍정 10mg",
+    "image": "assets/pill_images/pill_0008.png"
+  },
+  {
+    "name": "뉴로메드정(옥시라세탐)",
+    "image": "assets/pill_images/pill_0009.png"
+  },
+  {
+    "name": "다보타민큐정 10mg_병",
+    "image": "assets/pill_images/pill_0010.png"
+  },
+  {
+    "name": "동아가바펜틴정 800mg",
+    "image": "assets/pill_images/pill_0011.png"
+  },
+  {
+    "name": "동아오팔몬정(리마프로스트알파-시클로덱스트린포접화합물)",
+    "image": "assets/pill_images/pill_0012.png"
+  },
+  {
+    "name": "동화덴스톨캡슐 150mg_PTP",
+    "image": "assets/pill_images/pill_0013.png"
+  },
+  {
+    "name": "디카맥스디플러스정",
+    "image": "assets/pill_images/pill_0014.png"
+  },
+  {
+    "name": "디카테오엘씨정 10mg_병 ",
+    "image": "assets/pill_images/pill_0015.png"
+  },
+  {
+    "name": "디카테오정",
+    "image": "assets/pill_images/pill_0016.png"
+  },
+  {
+    "name": "라비에트정 20mg",
+    "image": "assets/pill_images/pill_0017.png"
+  },
+  {
+    "name": "라시도필캡슐(비매품)",
+    "image": "assets/pill_images/pill_0018.png"
+  },
+  {
+    "name": "락토엔큐캡슐_바실루스리케니포르미스균",
+    "image": "assets/pill_images/pill_0019.png"
+  },
+  {
+    "name": "란스톤엘에프디티정 30mg",
+    "image": "assets/pill_images/pill_0020.png"
+  },
+  {
+    "name": "람노스캡슐500mg_병 ",
+    "image": "assets/pill_images/pill_0021.png"
+  },
+  {
+    "name": "레일라정",
+    "image": "assets/pill_images/pill_0022.png"
+  },
+  {
+    "name": "렉사프로정 15mg ",
+    "image": "assets/pill_images/pill_0023.png"
+  },
+  {
+    "name": "로수바미브정 10_20mg ",
+    "image": "assets/pill_images/pill_0024.png"
+  },
+  {
+    "name": "로수젯정10_5밀리그램 ",
+    "image": "assets/pill_images/pill_0025.png"
+  },
+  {
+    "name": "리렉스펜정 300mg_PTP",
+    "image": "assets/pill_images/pill_0026.png"
+  },
+  {
+    "name": "리리카캡슐 150mg",
+    "image": "assets/pill_images/pill_0027.png"
+  },
+  {
+    "name": "리바로정 4mg ",
+    "image": "assets/pill_images/pill_0028.png"
+  },
+  {
+    "name": "리피로우정 20mg",
+    "image": "assets/pill_images/pill_0029.png"
+  },
+  {
+    "name": "리피토정 20mg",
+    "image": "assets/pill_images/pill_0030.png"
+  },
+  {
+    "name": "마그밀정(수산화마그네슘)",
+    "image": "assets/pill_images/pill_0031.png"
+  },
+  {
+    "name": "마도파정",
+    "image": "assets/pill_images/pill_0032.png"
+  },
+  {
+    "name": "마이칼디정",
+    "image": "assets/pill_images/pill_0033.png"
+  },
+  {
+    "name": "맥시부펜이알정 300mg",
+    "image": "assets/pill_images/pill_0034.png"
+  },
+  {
+    "name": "메가파워정 90mg_병",
+    "image": "assets/pill_images/pill_0035.png"
+  },
+  {
+    "name": "무코스타정(레바미피드)(비매품)",
+    "image": "assets/pill_images/pill_0036.png"
+  },
+  {
+    "name": "뮤코원캡슐_에르도스테인",
+    "image": "assets/pill_images/pill_0037.png"
+  },
+  {
+    "name": "뮤테란캡슐 100mg",
+    "image": "assets/pill_images/pill_0038.png"
+  },
+  {
+    "name": "바이오탑디캡슐 50mg_병 ",
+    "image": "assets/pill_images/pill_0039.png"
+  },
+  {
+    "name": "바이오탑하이캡슐 150mg_병 ",
+    "image": "assets/pill_images/pill_0040.png"
+  },
+  {
+    "name": "베시케어정 10mg",
+    "image": "assets/pill_images/pill_0041.png"
+  },
+  {
+    "name": "보령부스파정 5mg",
+    "image": "assets/pill_images/pill_0042.png"
+  },
+  {
+    "name": "브린텔릭스정 20mg ",
+    "image": "assets/pill_images/pill_0043.png"
+  },
+  {
+    "name": "비모보정 500_20mg",
+    "image": "assets/pill_images/pill_0044.png"
+  },
+  {
+    "name": "비오플250캡슐 282.5mg ",
+    "image": "assets/pill_images/pill_0045.png"
+  },
+  {
+    "name": "비유피-4정 20mg",
+    "image": "assets/pill_images/pill_0046.png"
+  },
+  {
+    "name": "비타비백정 100mg_병",
+    "image": "assets/pill_images/pill_0047.png"
+  },
+  {
+    "name": "삐콤씨에프정 618.6mg_병",
+    "image": "assets/pill_images/pill_0048.png"
+  },
+  {
+    "name": "삼남건조수산화알루미늄겔정",
+    "image": "assets/pill_images/pill_0049.png"
+  },
+  {
+    "name": "세비카정 10_40mg",
+    "image": "assets/pill_images/pill_0050.png"
+  },
+  {
+    "name": "스토가정 10mg",
+    "image": "assets/pill_images/pill_0051.png"
+  },
+  {
+    "name": "신바로정",
+    "image": "assets/pill_images/pill_0052.png"
+  },
+  {
+    "name": "써스펜8시간이알서방정 650mg",
+    "image": "assets/pill_images/pill_0053.png"
+  },
+  {
+    "name": "쎄로켈정 100mg",
+    "image": "assets/pill_images/pill_0054.png"
+  },
+  {
+    "name": "씨즈날정(세티리진염산염)",
+    "image": "assets/pill_images/pill_0055.png"
+  },
+  {
+    "name": "아모잘탄정 5_100mg",
+    "image": "assets/pill_images/pill_0056.png"
+  },
+  {
+    "name": "아보다트연질캡슐 0.5mg",
+    "image": "assets/pill_images/pill_0057.png"
+  },
+  {
+    "name": "아빌리파이정 10mg",
+    "image": "assets/pill_images/pill_0058.png"
+  },
+  {
+    "name": "아스피린프로텍트정 100mg",
+    "image": "assets/pill_images/pill_0059.png"
+  },
+  {
+    "name": "아질렉트정_라사길린메실산염",
+    "image": "assets/pill_images/pill_0060.png"
+  },
+  {
+    "name": "아토르바정 10mg",
+    "image": "assets/pill_images/pill_0061.png"
+  },
+  {
+    "name": "아토젯정 10_40mg ",
+    "image": "assets/pill_images/pill_0062.png"
+  },
+  {
+    "name": "알드린정",
+    "image": "assets/pill_images/pill_0063.png"
+  },
+  {
+    "name": "알러비정_세티리진염산염",
+    "image": "assets/pill_images/pill_0064.png"
+  },
+  {
+    "name": "알마겔정(알마게이트)(수출명_유한가스트라겔정)",
+    "image": "assets/pill_images/pill_0065.png"
+  },
+  {
+    "name": "알바스테인캡슐_에르도스테인",
+    "image": "assets/pill_images/pill_0066.png"
+  },
+  {
+    "name": "액티프롤정 60mg_PTP",
+    "image": "assets/pill_images/pill_0067.png"
+  },
+  {
+    "name": "에빅사정(메만틴염산염)(비매품)",
+    "image": "assets/pill_images/pill_0068.png"
+  },
+  {
+    "name": "에스원엠프정 20mg ",
+    "image": "assets/pill_images/pill_0069.png"
+  },
+  {
+    "name": "에어탈정(아세클로페낙)",
+    "image": "assets/pill_images/pill_0070.png"
+  },
+  {
+    "name": "엑스포지정 5_160mg",
+    "image": "assets/pill_images/pill_0071.png"
+  },
+  {
+    "name": "엔테론정 150mg",
+    "image": "assets/pill_images/pill_0072.png"
+  },
+  {
+    "name": "엔트레스토필름코팅정 200mg ",
+    "image": "assets/pill_images/pill_0073.png"
+  },
+  {
+    "name": "엘도스캡슐(에르도스테인)(수출용)",
+    "image": "assets/pill_images/pill_0074.png"
+  },
+  {
+    "name": "엘스테인정_에르도스테인",
+    "image": "assets/pill_images/pill_0075.png"
+  },
+  {
+    "name": "엘스테인캡슐(에르도스테인)",
+    "image": "assets/pill_images/pill_0076.png"
+  },
+  {
+    "name": "오마코연질캡슐",
+    "image": "assets/pill_images/pill_0077.png"
+  },
+  {
+    "name": "울트라셋이알서방정",
+    "image": "assets/pill_images/pill_0078.png"
+  },
+  {
+    "name": "원더칼-디츄어블정",
+    "image": "assets/pill_images/pill_0079.png"
+  },
+  {
+    "name": "이가탄에프캡슐 150mg_PTP",
+    "image": "assets/pill_images/pill_0080.png"
+  },
+  {
+    "name": "이튼큐정 35mg_PTP",
+    "image": "assets/pill_images/pill_0081.png"
+  },
+  {
+    "name": "인사돌플러스정 35mg_PTP",
+    "image": "assets/pill_images/pill_0082.png"
+  },
+  {
+    "name": "일양하이트린정 2mg",
+    "image": "assets/pill_images/pill_0083.png"
+  },
+  {
+    "name": "자누메트엑스알서방정 100_1000mg ",
+    "image": "assets/pill_images/pill_0084.png"
+  },
+  {
+    "name": "자누메트정 50_850mg",
+    "image": "assets/pill_images/pill_0085.png"
+  },
+  {
+    "name": "자누비아정 50mg",
+    "image": "assets/pill_images/pill_0086.png"
+  },
+  {
+    "name": "자이프렉사정 2.5mg",
+    "image": "assets/pill_images/pill_0087.png"
+  },
+  {
+    "name": "자트랄엑스엘정 10mg",
+    "image": "assets/pill_images/pill_0088.png"
+  },
+  {
+    "name": "제라타딘정_로라타딘",
+    "image": "assets/pill_images/pill_0089.png"
+  },
+  {
+    "name": "제미메트서방정 50_1000mg ",
+    "image": "assets/pill_images/pill_0090.png"
+  },
+  {
+    "name": "조인스정 200mg",
+    "image": "assets/pill_images/pill_0091.png"
+  },
+  {
+    "name": "졸로푸트정 100mg ",
+    "image": "assets/pill_images/pill_0092.png"
+  },
+  {
+    "name": "종근당글리아티린연질캡슐",
+    "image": "assets/pill_images/pill_0093.png"
+  },
+  {
+    "name": "지르텍정(세티리진염산염)",
+    "image": "assets/pill_images/pill_0094.png"
+  },
+  {
+    "name": "카나브정 60mg",
+    "image": "assets/pill_images/pill_0095.png"
+  },
+  {
+    "name": "카듀엣정 5mg_20mg",
+    "image": "assets/pill_images/pill_0096.png"
+  },
+  {
+    "name": "카발린캡슐 25mg ",
+    "image": "assets/pill_images/pill_0097.png"
+  },
+  {
+    "name": "케이캡정 50mg ",
+    "image": "assets/pill_images/pill_0098.png"
+  },
+  {
+    "name": "콜리네이트연질캡슐 400mg",
+    "image": "assets/pill_images/pill_0099.png"
+  },
+  {
+    "name": "쿠에타핀정 25mg",
+    "image": "assets/pill_images/pill_0100.png"
+  },
+  {
+    "name": "큐시드정 31.5mg_PTP",
+    "image": "assets/pill_images/pill_0101.png"
+  },
+  {
+    "name": "크레스토정 20mg",
+    "image": "assets/pill_images/pill_0102.png"
+  },
+  {
+    "name": "클라리틴정_로라타딘",
+    "image": "assets/pill_images/pill_0103.png"
+  },
+  {
+    "name": "타이레놀이알서방정(아세트아미노펜)(수출용)",
+    "image": "assets/pill_images/pill_0104.png"
+  },
+  {
+    "name": "타이레놀정500mg",
+    "image": "assets/pill_images/pill_0105.png"
+  },
+  {
+    "name": "토비애즈서방정 4mg",
+    "image": "assets/pill_images/pill_0106.png"
+  },
+  {
+    "name": "투스딘골드캡슐 150mg_PTP",
+    "image": "assets/pill_images/pill_0107.png"
+  },
+  {
+    "name": "트라젠타듀오정 2.5_850mg ",
+    "image": "assets/pill_images/pill_0108.png"
+  },
+  {
+    "name": "트라젠타정_리나글립틴",
+    "image": "assets/pill_images/pill_0109.png"
+  },
+  {
+    "name": "트루비타정 60mg_병",
+    "image": "assets/pill_images/pill_0110.png"
+  },
+  {
+    "name": "트루패스정 4mg",
+    "image": "assets/pill_images/pill_0111.png"
+  },
+  {
+    "name": "트윈스타정 40_5mg",
+    "image": "assets/pill_images/pill_0112.png"
+  },
+  {
+    "name": "펠루비정(펠루비프로펜)",
+    "image": "assets/pill_images/pill_0113.png"
+  },
+  {
+    "name": "프로스카정",
+    "image": "assets/pill_images/pill_0114.png"
+  },
+  {
+    "name": "플라빅스정 75mg",
+    "image": "assets/pill_images/pill_0115.png"
+  },
+  {
+    "name": "플리바스정 50mg",
+    "image": "assets/pill_images/pill_0116.png"
+  },
+  {
+    "name": "한미탐스캡슐 0.2mg",
+    "image": "assets/pill_images/pill_0117.png"
+  }
+]
