@@ -3,6 +3,7 @@
 스마트폰으로 알약을 촬영하면 YOLO 모델이 약을 인식하고, 식약처 API를 통해 효능·복용법·주의사항을 조회해주는 모바일 앱입니다.
 
 [![이게머약 시연영상](https://img.youtube.com/vi/b6sTlv_Z9cs/0.jpg)](https://youtu.be/b6sTlv_Z9cs)
+> 👆 썸네일을 클릭하면 시연 영상으로 이동합니다.
 
 ---
 
