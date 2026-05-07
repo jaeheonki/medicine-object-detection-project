@@ -71,6 +71,14 @@
 
 ---
 
+## 데이터셋
+
+| 데이터셋 | 출처 |
+|---------|------|
+| 경구약제 이미지 데이터 | [AI Hub](https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&dataSetSn=576) |
+
+---
+
 ## 파이프라인
 
 ```
