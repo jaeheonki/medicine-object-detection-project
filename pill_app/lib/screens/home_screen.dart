@@ -15,8 +15,9 @@ const String apiUrl = 'http://localhost:9000/predict';
 class HomeScreen extends StatefulWidget {
   final void Function(List<dynamic> results) onResults;
   final VoidCallback? onAlarmTap;
+  final bool hasAlarms;
 
-  const HomeScreen({super.key, required this.onResults, this.onAlarmTap});
+  const HomeScreen({super.key, required this.onResults, this.onAlarmTap, this.hasAlarms = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -133,18 +134,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Icon(Icons.notifications_outlined,
                         color: Colors.white, size: 26),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
+                    if (widget.hasAlarms)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

@@ -220,6 +220,7 @@ class _MainPageState extends State<MainPage> {
           return HomeScreen(
             onResults: (results) => setState(() => _results = results),
             onAlarmTap: () => setState(() => _selectedIndex = 2),
+            hasAlarms: _schedules.isNotEmpty,
           );
         }
 
