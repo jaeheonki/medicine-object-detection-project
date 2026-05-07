@@ -38,6 +38,9 @@
 
 <table>
   <tr>
+    <td align="center" colspan="4"><img src="docs/images/splash_screen.jpg" width="200px"/><br/><b>스플래시</b></td>
+  </tr>
+  <tr>
     <td align="center"><img src="docs/images/home_screen.png" width="200px"/><br/><b>홈</b></td>
     <td align="center"><img src="docs/images/result_screen.jpg" width="200px"/><br/><b>알약 찾기 결과</b></td>
     <td align="center"><img src="docs/images/list_screen.png" width="200px"/><br/><b>약 목록</b></td>
