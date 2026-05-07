@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../pill_image_map.dart';
 import 'package:http/http.dart' as http;
 
-const String _baseUrl = 'http://localhost:9000';
+const String _baseUrl = 'http://192.168.75.108:9000';
 
 class PillListScreen extends StatefulWidget {
   const PillListScreen({super.key});
