@@ -6,12 +6,26 @@
 
 ## 팀원
 
-| 이름 | 역할 |
-|------|------|
-|김재헌 | |
-|김건오 | |
-|김재헌 | |
-|임유빈 | |
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/member1.png" width="100px"/><br/>
+      <b>김재헌</b><br/>PM
+    </td>
+    <td align="center">
+      <img src="docs/images/member2.png" width="100px"/><br/>
+      <b>김건오</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/member3.png" width="100px"/><br/>
+      <b>김재헌</b>
+    </td>
+    <td align="center">
+      <img src="docs/images/member4.png" width="100px"/><br/>
+      <b>임유빈</b>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -20,7 +34,7 @@
 - **알약 인식** — 촬영 또는 갤러리 이미지로 알약 탐지
 - **약 정보 조회** — 효능, 복용법, 주의사항 자동 조회
 - **복약 알림** — 복약 시간 설정 및 알림 등록
-- **약 목록** — 인식 가능한 전체 약품 목록 조회
+- **약 목록** — 인식 가능한 전체 약품 목록 조회/검색 지원
 
 ---
 
@@ -93,6 +107,32 @@ flutter build apk
 
 > `lib/screens/home_screen.dart`, `lib/screens/pill_list_screen.dart`의 서버 URL을 PC의 IP 주소로 변경 후 빌드하세요.
 > 빌드된 APK는 `build/app/outputs/flutter-apk/app-release.apk`에 생성됩니다.
+
+---
+
+## 트러블슈팅
+
+추가 데이터 통합 과정에서 발생한 문제들입니다.
+
+**1. JSON 파일명 충돌 (`utils.py`)**
+조합 이미지 1개당 약별 JSON 4개가 같은 파일명으로 덮어씌워져 1개만 남는 문제 발생. 이미지당 bbox가 1개만 잡히던 원인이었습니다.
+→ 서브디렉터리 구조를 유지하며 저장하도록 로직을 수정해 해결.
+
+**2. `fix_annotation_dir` 파일명 충돌 (`annotation_mapping.py`)**
+서브디렉터리 구조를 무시하고 flat하게 복사하면서 같은 이름의 JSON이 덮어씌워짐.
+→ `relative_to(input_dir)`로 서브디렉터리 경로를 보존해 저장하도록 수정해 해결.
+
+**3. `make_category_map` KeyError (`model_utils.py`)**
+추가 데이터 전용 클래스가 원본 어노테이션에 없어서 매핑 생성 시 KeyError 발생.
+→ 매핑 테이블에 없는 클래스는 skip하도록 수정해 해결.
+
+**4. submission row KeyError (`model_utils.py`)**
+추가 데이터 클래스에 대한 YOLO 예측값이 매핑 테이블에 없어서 KeyError 발생.
+→ 매핑에 없는 클래스의 예측값은 submission에서 제외하도록 수정해 해결.
+
+**5. `category_id` 매핑 오류 (`model_utils.py`)**
+`item_seq`(9자리 숫자)를 `category_id`로 제출하면서 score **0.12** 기록.
+→ 원본 `category_id` 기준으로 매핑을 수정한 후 **0.987**까지 향상.
 
 ---
 
