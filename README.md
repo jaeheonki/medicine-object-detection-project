@@ -38,7 +38,7 @@
 
 <table>
   <tr>
-    <td align="center" colspan="4"><img src="docs/images/splash_screen.jpg" width="200px"/><br/><b>스플래시</b></td>
+    <td align="center" colspan="4"><img src="docs/images/splash_screen.jpg" width="200px"/></td>
   </tr>
   <tr>
     <td align="center"><img src="docs/images/home_screen.png" width="200px"/><br/><b>홈</b></td>
