@@ -158,8 +158,7 @@ flutter build apk
 ```
 Medicine_Project/
 ├── checkpoints/        # YOLO 모델 가중치
-├── data/               # 학습 데이터
-├── docs/               # EDA 분석, 도메인 지식 문서
+├── docs/               # 알약 도메인 지식, 발표자료, 최종 보고서
 ├── models/             # 모델 아키텍처 코드
 ├── pill_app/           # Flutter 앱
 ├── src/                # FastAPI 서버, 데이터 처리 코드
