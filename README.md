@@ -10,7 +10,7 @@
   <tr>
     <td align="center">
       <img src="docs/images/member1.png" width="100px"/><br/>
-      <b>김재헌</b><br/>PM
+      <b>김재헌(PM)</b>
     </td>
     <td align="center">
       <img src="docs/images/member2.png" width="100px"/><br/>
