@@ -36,6 +36,15 @@
 - **복약 알림** — 복약 시간 설정 및 알림 등록
 - **약 목록** — 인식 가능한 전체 약품 목록 조회/검색 지원
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/home_screen.png" width="200px"/><br/><b>홈</b></td>
+    <td align="center"><img src="docs/images/result_screen.jpg" width="200px"/><br/><b>알약 찾기 결과</b></td>
+    <td align="center"><img src="docs/images/list_screen.png" width="200px"/><br/><b>약 목록</b></td>
+    <td align="center"><img src="docs/images/alarm_screen.png" width="200px"/><br/><b>복약 알림</b></td>
+  </tr>
+</table>
+
 ---
 
 ## 기술 스택
