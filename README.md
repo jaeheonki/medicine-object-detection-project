@@ -87,21 +87,7 @@
 
 ## 파이프라인
 
-```
-[Flutter 앱]
-    │
-    │  이미지 선택 → POST /predict
-    ▼
-[FastAPI 서버]
-    │
-    ├─ YOLO 추론 → 알약 탐지 + bbox crop
-    ├─ 식약처 API 조회 (병렬)
-    └─ JSON 응답 반환
-    │
-    ▼
-[Flutter 앱]
-    탐지 결과 카드 표시 + 복약 알림 등록
-```
+![파이프라인 다이어그램](docs/images/pipeline_diagram.png)
 
 ---
 
