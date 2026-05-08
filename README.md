@@ -87,7 +87,7 @@
 
 ## 파이프라인
 
-![파이프라인 다이어그램](docs/images/pipeline_diagram.png)
+<img src="docs/images/pipeline_diagram.png" width="600"/>
 
 ---
 
