@@ -185,7 +185,7 @@ Medicine_Project/
 | 이름 | 링크 |
 |------|------|
 | 김재헌 | [협업일지 다운로드](docs/협업일지_김재헌.pdf) |
-| 김건오 | |
-| 김재헌 | |
+| 김건오 |[협업일지 링크](https://www.notion.so/35945e30975580839de7cc92d91e0692) |
+| 김재헌 |[협업일지 링크](https://www.notion.so/1-34843dd18cdc804fb29cf59d787d6d32?source=copy_link) |
 | 임유빈 | |
 
