@@ -1,0 +1,36 @@
+[project]
+name = "medicine-project"
+version = "0.1.0"
+description = "Medicine Object Detection Project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.10",
+    "numpy>=2.4",
+    "pandas>=3.0",
+    "torchmetrics>=1.9",
+    "gdown>=6.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "pycocotools>=2.0.11",
+    "pyyaml>=6.0",
+    "ultralytics>=8.0",
+    "transformers>=4.0",
+    "timm>=0.9",
+    "huggingface-hub>=1.12.2",
+    "requests>=2.0",
+    "python-dotenv>=1.0",
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+    "python-multipart>=0.0.9",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+torchvision = [{ index = "pytorch-cu128" }]
+torchaudio = [{ index = "pytorch-cu128" }]
