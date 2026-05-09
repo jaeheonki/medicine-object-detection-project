@@ -176,7 +176,7 @@ Medicine_Project/
 ## 📄 보고서 및 발표자료
 
 - [최종 보고서 다운로드](docs/4팀_프로젝트_최종_보고서.pdf)
-- 발표자료
+- [발표자료 다운로드](docs/AI_team4_pillApp.pdf)
 
 ---
 
