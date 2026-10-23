@@ -7,6 +7,23 @@
 
 ---
 
+## 김재헌의 기여
+
+**담당 범위** · PM, RetinaNet 구현, YOLO11s·11m 비교·튜닝, 데이터 통합 오류 수정과 약품 API 연동.
+
+- 5종 모델 비교를 제안하고 torchvision RetinaNet의 탐지 헤드를 클래스 수에 맞춰 교체해 실험했습니다. YOLO11s·11m은 학습률·입력 크기·배치·학습 시간 등을 기록하며 비교하고 팀과 최종 모델을 선택했습니다.
+- 추가 데이터 통합에서 같은 파일명의 JSON이 덮어써지는 원인을 찾아 하위 폴더 구조를 보존하도록 수정했습니다.
+- 식약처 제품허가정보 API를 우선 조회하고, e약은요 API로 부족한 정보를 보완하도록 연결했습니다. 앱 전체 구현을 개인 담당으로 포함하지 않습니다.
+
+| 담당 코드 | 실험·결과 자료 |
+| --- | --- |
+| [RetinaNet 구성](models/retinanet.py) · [데이터 통합](src/utils.py) · [어노테이션 처리](src/annotation_mapping.py) · [약품 조회](src/pill_lookup.py) | [YOLO11s 실험 기록](tests/yolo_test/yolo_11s_test/experiment_tracking.md) · [YOLO11m 실험 기록](tests/yolo_test/yolo_11m_test/experiment_tracking.md) · [최종 보고서](docs/4팀_프로젝트_최종_보고서.pdf) |
+
+> 본문의 모델 성능은 프로젝트 내부 검증 결과입니다. 데이터 확장 전후에는 평가 클래스 수도 달라져 동일 조건의 튜닝 효과만으로 해석하지 않습니다.
+
+---
+
+
 ## 팀원
 
 <table>
